@@ -177,7 +177,7 @@ function TransactionTable({ transactions, onEdit, onDelete, compact = false }) {
   )
 }
 
-function TransactionModal({ transaction, categories, onClose, onSave, saving, error }) {
+function TransactionModal({ transaction, categories, categoriesLoading, categoriesError, onClose, onSave, saving, error }) {
   const [form, setForm] = useState(() => ({
     title: transaction?.title || '',
     amount: transaction?.amount ?? '',
@@ -186,39 +186,74 @@ function TransactionModal({ transaction, categories, onClose, onSave, saving, er
     date: transaction?.date || today.toISOString().slice(0, 10),
     notes: transaction?.notes || '',
   }))
+  const [validationError, setValidationError] = useState('')
   const availableCategories = categories.filter((category) => category.type === form.type)
 
   function updateField(event) {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
+    setValidationError('')
   }
 
   function submit(event) {
     event.preventDefault()
-    onSave({ ...form, amount: Number(form.amount) })
+    const title = form.title.trim()
+    const amount = Number(form.amount)
+    const selectedCategory = availableCategories.some((category) => category.name === form.category)
+    const dateIsValid = /^\d{4}-\d{2}-\d{2}$/.test(form.date)
+      && !Number.isNaN(new Date(`${form.date}T00:00:00.000Z`).getTime())
+      && new Date(`${form.date}T00:00:00.000Z`).toISOString().slice(0, 10) === form.date
+
+    if (!title) {
+      setValidationError('Title is required and cannot be empty.')
+      return
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setValidationError('Enter an amount greater than zero.')
+      return
+    }
+    if (!selectedCategory) {
+      setValidationError('Choose a category for this transaction type.')
+      return
+    }
+    if (!dateIsValid) {
+      setValidationError('Choose a valid transaction date.')
+      return
+    }
+
+    setValidationError('')
+    onSave({ ...form, title, amount, notes: form.notes.trim() })
   }
 
   return (
-    <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => !saving && event.target === event.currentTarget && onClose()}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !saving) onClose()
+      }}
+    >
       <section className="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div className="modal-heading">
           <div><span className="eyebrow">{transaction ? 'UPDATE RECORD' : 'NEW RECORD'}</span><h2 id="modal-title">{transaction ? 'Edit transaction' : 'Add a transaction'}</h2></div>
-          <button className="icon-button modal-close" type="button" aria-label="Close dialog" onClick={onClose}><Icon name="close" /></button>
+          <button className="icon-button modal-close" type="button" aria-label="Close dialog" onClick={onClose} disabled={saving}><Icon name="close" /></button>
         </div>
         <form onSubmit={submit}>
           <div className="type-toggle" role="group" aria-label="Transaction type">
-            {['Expense', 'Income'].map((type) => <button key={type} type="button" className={form.type === type ? `selected ${type.toLowerCase()}` : ''} onClick={() => setForm((current) => ({ ...current, type, category: categories.find((category) => category.type === type)?.name || '' }))}>{type}</button>)}
+            {['Expense', 'Income'].map((type) => <button key={type} type="button" aria-pressed={form.type === type} className={form.type === type ? `selected ${type.toLowerCase()}` : ''} onClick={() => { setForm((current) => ({ ...current, type, category: categories.find((category) => category.type === type)?.name || '' })); setValidationError('') }} disabled={saving}>{type}</button>)}
           </div>
-          <label className="form-field"><span>Description</span><input autoFocus name="title" value={form.title} onChange={updateField} placeholder="e.g. Monthly groceries" required maxLength={100} /></label>
+          <label className="form-field"><span>Description</span><input autoFocus name="title" value={form.title} onChange={updateField} placeholder="e.g. Monthly groceries" required maxLength={100} disabled={saving} /></label>
           <div className="form-row">
-            <label className="form-field"><span>Amount</span><div className="input-prefix"><span>₹</span><input name="amount" type="number" value={form.amount} onChange={updateField} placeholder="0.00" min="0.01" step="0.01" required /></div></label>
-            <label className="form-field"><span>Date</span><input name="date" type="date" value={form.date} onChange={updateField} required /></label>
+            <label className="form-field"><span>Amount</span><div className="input-prefix"><span>₹</span><input name="amount" type="number" value={form.amount} onChange={updateField} placeholder="0.00" min="0.01" step="0.01" required disabled={saving} /></div></label>
+            <label className="form-field"><span>Date</span><input name="date" type="date" value={form.date} onChange={updateField} required disabled={saving} /></label>
           </div>
-          <label className="form-field"><span>Category</span><select name="category" value={form.category} onChange={updateField} required disabled={!availableCategories.length}><option value="" disabled>Select a category</option>{availableCategories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}</select></label>
-          <label className="form-field"><span>Note <small>(optional)</small></span><textarea name="notes" value={form.notes} onChange={updateField} placeholder="Add a little more detail..." rows="3" maxLength={500} /></label>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          {!availableCategories.length && <p className="form-error" role="alert">No {form.type.toLowerCase()} categories are available. Add one using your backend category setup.</p>}
-          <div className="modal-actions"><button type="button" className="button button-quiet" onClick={onClose}>Cancel</button><button type="submit" className="button button-primary" disabled={saving || !availableCategories.length}>{saving ? 'Saving…' : transaction ? 'Save changes' : 'Add transaction'}</button></div>
+          <label className="form-field"><span>Category</span><select name="category" value={form.category} onChange={updateField} required disabled={saving || categoriesLoading || !availableCategories.length}><option value="" disabled>Select a category</option>{availableCategories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}</select></label>
+          <label className="form-field"><span>Note <small>(optional)</small></span><textarea name="notes" value={form.notes} onChange={updateField} placeholder="Add a little more detail..." rows="3" maxLength={500} disabled={saving} /></label>
+          {categoriesLoading && <p className="form-hint" role="status">Loading categories…</p>}
+          {!categoriesLoading && categoriesError && <p className="form-error" role="alert">Couldn’t load categories: {categoriesError}</p>}
+          {!categoriesLoading && !categoriesError && !availableCategories.length && <p className="form-error" role="alert">No {form.type.toLowerCase()} categories are available.</p>}
+          {(validationError || error) && <p className="form-error" role="alert">{validationError || error}</p>}
+          <div className="modal-actions"><button type="button" className="button button-quiet" onClick={onClose} disabled={saving}>Cancel</button><button type="submit" className="button button-primary" disabled={saving || categoriesLoading || !availableCategories.length}>{saving ? 'Saving…' : transaction ? 'Save changes' : 'Add transaction'}</button></div>
         </form>
       </section>
     </div>
@@ -232,6 +267,8 @@ function App() {
   const [report, setReport] = useState(null)
   const [spending, setSpending] = useState([])
   const [categories, setCategories] = useState([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [categoriesError, setCategoriesError] = useState('')
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [apiError, setApiError] = useState('')
@@ -244,6 +281,8 @@ function App() {
   const [toast, setToast] = useState('')
 
   const loadData = useCallback(async () => {
+    setCategoriesLoading(true)
+    setCategoriesError('')
     const [year, monthNumber] = month.split('-')
     const query = `month=${monthNumber}&year=${year}`
 
@@ -279,9 +318,12 @@ function App() {
 
       if (categoryResult.status === 'fulfilled') {
         setCategories(categoryResult.value.data || [])
+        setCategoriesError('')
       } else {
+        setCategoriesError(categoryResult.reason.message)
         errors.push(`Categories: ${categoryResult.reason.message}`)
       }
+      setCategoriesLoading(false)
 
       if (transactionResult.status === 'fulfilled') {
         setTransactions(transactionResult.value.data || [])
@@ -292,6 +334,8 @@ function App() {
       setApiError(errors.length ? errors.join(' · ') : '')
     } catch (error) {
       setApiError(error.message)
+      setCategoriesError(error.message)
+      setCategoriesLoading(false)
     } finally {
       setLoading(false)
     }
@@ -457,7 +501,7 @@ function App() {
           <footer className="page-footer"><span>Made for mindful money moments.</span><span><i /> All amounts in Indian Rupees (₹)</span></footer>
         </div>
       </main>
-      {showModal && <TransactionModal transaction={modalTransaction} categories={categories} onClose={() => setShowModal(false)} onSave={saveTransaction} saving={saving} error={formError} />}
+      {showModal && <TransactionModal transaction={modalTransaction} categories={categories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onClose={() => setShowModal(false)} onSave={saveTransaction} saving={saving} error={formError} />}
       {toast && <div className="toast-message" role="status"><span>✓</span>{toast}</div>}
     </div>
   )

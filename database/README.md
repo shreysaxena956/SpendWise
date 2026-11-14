@@ -50,7 +50,23 @@ erDiagram
 
 ---
 
-## 3. Data Dictionary: `transactions` Table
+## 3. Data Dictionary
+
+### 3.1 `categories` Table (Member 3 Responsibility)
+
+| Column Name | SQL Data Type | Nullable | Key / Constraint | Description |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `SERIAL` (`INTEGER`) | **NO** | `PRIMARY KEY` | Auto-incrementing unique identifier for each category. |
+| `name` | `VARCHAR(50)` | **NO** | `UNIQUE`, `chk_category_name_not_empty` | Category name (e.g. "Food", "Salary", "Uncategorised"). Must be unique and non-empty. |
+| `type` | `VARCHAR(10)` | **NO** | `chk_category_type` | Nature of transactions under this category (`'Income'` or `'Expense'`). |
+| `created_at` | `TIMESTAMP WITH TIME ZONE` | **NO** | `DEFAULT CURRENT_TIMESTAMP` | System timestamp when category was created. |
+
+#### Default Categories:
+- **Default Fallback Category:** `Uncategorised` (protected from deletion)
+- **Income Categories:** `Salary`, `Freelance`, `Business`, `Other Income`
+- **Expense Categories:** `Food`, `Travel`, `Shopping`, `Education`, `Entertainment`, `Healthcare`, `Bills`, `Others`
+
+### 3.2 `transactions` Table (Member 1 Responsibility)
 
 | Column Name | SQL Data Type | Nullable | Key / Constraint | Description |
 | :--- | :--- | :---: | :--- | :--- |
@@ -158,4 +174,7 @@ model Transaction {
      FROM transactions;
      ```
      This subtracts expenses from incomes in a single database pass.
+
+5. **Q: How does the application handle orphan records when a category is deleted?**
+   - **Answer:** In `categoryController.js` and `database/category-queries.sql`, before a category record is deleted, the system executes an update that reassigns all linked transactions to the default `Uncategorised` category. The default `Uncategorised` category itself is protected from deletion. Only after this migration completes is the target category safely removed, completely eliminating orphan records and foreign key violations.
 

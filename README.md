@@ -12,7 +12,7 @@ SpendWise is designed for a single user on one computer to record income and exp
 | :--- | :--- | :--- |
 | **Member 1** | **Transaction Management Module** | **Frontend:** Income form, Expense form, Editing, Deletion, Validation<br>**Backend:** Transaction REST APIs (`GET`, `POST`, `PUT`, `DELETE`), controllers, routes<br>**DBMS:** Transactions table design, foreign key to Category, constraints, CRUD SQL queries, sample data, documentation |
 | **Member 2 ** | **Dashboard & Analytics Module** | **Frontend:** Responsive dashboard, 6 KPI financial summary cards, Category-wise Spending Donut Chart, Monthly Spending Overview 12-month Bar Chart, recent activity preview<br>**Backend:** Dashboard API (`/api/dashboard`), Monthly report API (`/api/reports/monthly`), Category report API (`/api/reports/category-wise`), calculations<br>**DBMS:** `database/analytics-queries.sql` (aggregate functions `SUM`, `COUNT`, `AVG`, `GROUP BY`, `JOIN`s, date functions, window functions), calculation documentation |
-| **Member 3** | **Category & Settings Module** | Category CRUD, category validation, schema coordination |
+| **Member 3** | **Categories & Transaction History Module** | **Frontend:** Category Management view (`CategoryManager.jsx`), Transaction History view (`TransactionHistory.jsx` replacing old list with title search, category, type, month, and year filters)<br>**Backend:** Category REST APIs (`GET`, `POST`, `PUT`, `DELETE` with orphan transaction re-assignment to 'Uncategorised'), Transaction history filtering (`type`, `categoryId`, `month`, `year`, `search`)<br>**DBMS:** `database/category-queries.sql` (Categories table DDL, PK/FK, CHECK constraints, CRUD, orphan handling, JOINs, normalization documentation) |
 
 ---
 
@@ -23,19 +23,20 @@ SpendWise/
 ├── frontend/               # React 18 + Vite frontend
 │   ├── src/
 │   │   ├── components/
+│   │   │   ├── CategoryManager.jsx       # Category CRUD & orphan reassignment (Member 3)
+│   │   │   ├── TransactionHistory.jsx    # Complete Transaction History & multi-filters (Member 3)
 │   │   │   ├── DashboardView.jsx         # Main Dashboard & Analytics view (Member 2)
 │   │   │   ├── DashboardSummaryCards.jsx # 6 Financial KPI summary cards (Member 2)
 │   │   │   ├── CategorySpendingChart.jsx # Interactive SVG Donut chart & breakdown (Member 2)
 │   │   │   ├── MonthlyOverviewChart.jsx  # Interactive SVG 12-Month bar chart (Member 2)
-│   │   │   ├── TransactionList.jsx       # Transaction records table (Member 1)
-│   │   │   ├── TransactionFilters.jsx    # Search and filter toolbar (Member 1)
+│   │   │   ├── TransactionSummaryCards.jsx # KPI cards: Balance, Income, Expense (Member 1)
 │   │   │   ├── AddIncomeModal.jsx        # Income creation modal (Member 1)
 │   │   │   ├── AddExpenseModal.jsx       # Expense creation modal (Member 1)
 │   │   │   ├── TransactionEditModal.jsx   # Edit transaction modal (Member 1)
 │   │   │   └── TransactionDeleteModal.jsx # Delete confirmation modal (Member 1)
 │   │   ├── services/
 │   │   │   └── api.js                    # Centralized REST API client (Fetch + async/await)
-│   │   ├── App.jsx                       # Root coordinator with tab navigation
+│   │   ├── App.jsx                       # Root coordinator with 3-tab navigation
 │   │   ├── index.css                     # Desktop design system & SVG chart styles
 │   │   └── main.jsx                      # React root entry point
 │   ├── package.json
@@ -48,10 +49,10 @@ SpendWise/
 │   ├── controllers/
 │   │   ├── dashboardController.js        # Dashboard summary calculations (Member 2)
 │   │   ├── reportController.js           # Monthly & category reports (Member 2)
-│   │   ├── transactionController.js      # Transaction CRUD & validation (Member 1)
-│   │   └── categoryController.js         # Category management (Member 3)
+│   │   ├── transactionController.js      # Transaction CRUD & history filters (Member 1 & 3)
+│   │   └── categoryController.js         # Category CRUD & orphan migration (Member 3)
 │   ├── data/
-│   │   └── temporaryMockData.js          # Shared dataset with foreign keys
+│   │   └── temporaryMockData.js          # Shared dataset with foreign keys & defaults
 │   ├── routes/
 │   │   ├── dashboardRoutes.js            # /api/dashboard REST routes (Member 2)
 │   │   ├── reportRoutes.js               # /api/reports REST routes (Member 2)
@@ -60,17 +61,18 @@ SpendWise/
 │   ├── middleware/
 │   │   └── errorHandler.js               # Centralized error handler
 │   ├── server.js                         # Express app entrypoint
-│   ├── test-api.js                       # Automated API test suite (24 passing tests)
+│   ├── test-api.js                       # Automated API test suite (30 passing tests)
 │   ├── package.json
 │   └── README.md                         # Backend documentation
 │
 ├── database/               # DBMS Module: SQL scripts & documentation
-│   ├── analytics-queries.sql       # Analytical SQL: Aggregates, GROUP BY, JOINs, Date functions (Member 2)
+│   ├── category-queries.sql        # Category DDL, CRUD, safe orphan delete, JOINs (Member 3)
+│   ├── analytics-queries.sql       # Analytical SQL: Aggregates, GROUP BY, JOINs (Member 2)
 │   ├── analytics-documentation.md  # Detailed calculations & viva prep guide (Member 2)
 │   ├── schema.sql                  # DDL: Tables, PK, FK, CHECK constraints, indexes
 │   ├── sample_data.sql             # Seed data for categories and transactions
 │   ├── crud_queries.sql            # CRUD SQL queries (Member 1)
-│   └── README.md                   # Transactions table data dictionary & ER diagram
+│   └── README.md                   # Data dictionaries, ER diagram, normalization
 │
 └── prisma/
     └── schema.prisma       # Shared Prisma schema with Category and Transaction models
@@ -103,6 +105,7 @@ npm run dev
 The React frontend starts on `http://localhost:5173`. Open your web browser to view the SpendWise application.
 
 ### 3. Database (PostgreSQL & Prisma)
+- Category & Transaction History SQL queries: [`database/category-queries.sql`](./database/category-queries.sql)
 - Analytics SQL queries: [`database/analytics-queries.sql`](./database/analytics-queries.sql)
 - Analytics calculations documentation: [`database/analytics-documentation.md`](./database/analytics-documentation.md)
 - SQL schema definitions: [`database/schema.sql`](./database/schema.sql)

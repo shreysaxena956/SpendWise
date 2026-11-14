@@ -682,9 +682,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ---
 
-<div align="center">
 
-**Developed with ❤️ by the SpendWise Engineering Team**  
-*College Engineering Group Project — Computer Science & Engineering*
 
 </div>

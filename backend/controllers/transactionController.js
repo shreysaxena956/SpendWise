@@ -162,21 +162,21 @@ async function getAllTransactions(req, res, next) {
         const targetMonth = parseInt(month, 10);
         if (targetMonth >= 1 && targetMonth <= 12) {
           const startMonthStr = String(targetMonth).padStart(2, '0');
-          const firstDay = `${targetYear}-${startMonthStr}-01`;
+          const firstDay = new Date(`${targetYear}-${startMonthStr}-01T00:00:00.000Z`);
           const lastDayNum = new Date(targetYear, targetMonth, 0).getDate();
-          const lastDay = `${targetYear}-${startMonthStr}-${String(lastDayNum).padStart(2, '0')}`;
+          const lastDay = new Date(`${targetYear}-${startMonthStr}-${String(lastDayNum).padStart(2, '0')}T23:59:59.999Z`);
           where.date = { gte: firstDay, lte: lastDay };
         }
       } else {
         where.date = {
-          gte: `${targetYear}-01-01`,
-          lte: `${targetYear}-12-31`
+          gte: new Date(`${targetYear}-01-01T00:00:00.000Z`),
+          lte: new Date(`${targetYear}-12-31T23:59:59.999Z`)
         };
       }
     } else if (startDate || endDate) {
       where.date = {};
-      if (startDate) where.date.gte = startDate;
-      if (endDate) where.date.lte = endDate;
+      if (startDate) where.date.gte = new Date(`${startDate}T00:00:00.000Z`);
+      if (endDate) where.date.lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
     // Sorting options (default by date descending)
@@ -212,8 +212,10 @@ async function getAllTransactions(req, res, next) {
       } else if (tx.categoryId && catMap[tx.categoryId]) {
         resolvedCategory = catMap[tx.categoryId];
       }
+      const dateFormatted = tx.date instanceof Date ? tx.date.toISOString().slice(0, 10) : String(tx.date || '');
       return {
         ...tx,
+        date: dateFormatted,
         category: resolvedCategory || 'Uncategorised'
       };
     });
@@ -251,9 +253,13 @@ async function getTransactionById(req, res, next) {
       });
     }
 
+    const dateFormatted = transaction.date instanceof Date ? transaction.date.toISOString().slice(0, 10) : String(transaction.date || '');
     res.status(200).json({
       success: true,
-      data: transaction
+      data: {
+        ...transaction,
+        date: dateFormatted
+      }
     });
   } catch (error) {
     next(error);
@@ -272,14 +278,27 @@ async function createTransaction(req, res, next) {
       });
     }
 
+    const payload = {
+      title: validation.data.title,
+      amount: validation.data.amount,
+      type: validation.data.type,
+      date: new Date(validation.data.date),
+      categoryId: validation.data.categoryId,
+      notes: validation.data.notes || ''
+    };
     const newTransaction = await prisma.transaction.create({
-      data: validation.data
+      data: payload
     });
+    const dateFormatted = newTransaction.date instanceof Date ? newTransaction.date.toISOString().slice(0, 10) : String(newTransaction.date || '');
 
     res.status(201).json({
       success: true,
       message: `${newTransaction.type} transaction recorded successfully.`,
-      data: newTransaction
+      data: {
+        ...newTransaction,
+        category: validation.data.category,
+        date: dateFormatted
+      }
     });
   } catch (error) {
     next(error);
@@ -320,16 +339,29 @@ async function updateTransaction(req, res, next) {
       });
     }
 
+    const payload = {};
+    if (validation.data.title !== undefined) payload.title = validation.data.title;
+    if (validation.data.amount !== undefined) payload.amount = validation.data.amount;
+    if (validation.data.type !== undefined) payload.type = validation.data.type;
+    if (validation.data.date !== undefined) payload.date = new Date(validation.data.date);
+    if (validation.data.categoryId !== undefined) payload.categoryId = validation.data.categoryId;
+    if (validation.data.notes !== undefined) payload.notes = validation.data.notes;
+
     // Update the transaction in database
     const updatedTransaction = await prisma.transaction.update({
       where: { id: transactionId },
-      data: validation.data
+      data: payload
     });
+    const dateFormatted = updatedTransaction.date instanceof Date ? updatedTransaction.date.toISOString().slice(0, 10) : String(updatedTransaction.date || '');
 
     res.status(200).json({
       success: true,
       message: 'Transaction updated successfully.',
-      data: updatedTransaction
+      data: {
+        ...updatedTransaction,
+        category: validation.data.category || existing.category,
+        date: dateFormatted
+      }
     });
   } catch (error) {
     next(error);

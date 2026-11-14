@@ -69,8 +69,8 @@ async function getMonthlyReport(req, res, next) {
     const yearTransactions = await prisma.transaction.findMany({
       where: {
         date: {
-          gte: `${targetYear}-01-01`,
-          lte: `${targetYear}-12-31`
+          gte: new Date(`${targetYear}-01-01T00:00:00.000Z`),
+          lte: new Date(`${targetYear}-12-31T23:59:59.999Z`)
         }
       },
       orderBy: { date: 'desc' }
@@ -105,7 +105,7 @@ async function getMonthlyReport(req, res, next) {
       const tx = yearTransactions[i];
       const amount = parseFloat(tx.amount) || 0;
       const type = (tx.type || '').toLowerCase();
-      const dateStr = tx.date || '';
+      const dateStr = tx.date instanceof Date ? tx.date.toISOString().slice(0, 10) : String(tx.date || '');
 
       // Determine transaction month (from "YYYY-MM-DD")
       const txMonth = parseInt(dateStr.substring(5, 7), 10);
@@ -259,11 +259,14 @@ async function getCategoryWiseReport(req, res, next) {
       const startDate = `${targetYear}-${monthStr}-01`;
       const lastDayNum = new Date(targetYear, targetMonth, 0).getDate();
       const endDate = `${targetYear}-${monthStr}-${String(lastDayNum).padStart(2, '0')}`;
-      where.date = { gte: startDate, lte: endDate };
+      where.date = {
+        gte: new Date(`${startDate}T00:00:00.000Z`),
+        lte: new Date(`${endDate}T23:59:59.999Z`)
+      };
     } else if (req.query.year) {
       where.date = {
-        gte: `${targetYear}-01-01`,
-        lte: `${targetYear}-12-31`
+        gte: new Date(`${targetYear}-01-01T00:00:00.000Z`),
+        lte: new Date(`${targetYear}-12-31T23:59:59.999Z`)
       };
     }
 

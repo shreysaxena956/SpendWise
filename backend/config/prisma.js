@@ -32,6 +32,10 @@ if (!useMock) {
     prisma = new PrismaClient();
     console.log('[Prisma] Connected using real Prisma Client.');
   } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[Prisma Fatal] Failed to initialize Prisma Client in production:', error.message);
+      throw error;
+    }
     console.warn('[Prisma] Prisma Client is not yet generated or available.');
     console.warn('[Prisma] Falling back to temporary mock dataset.');
     prisma = createMockPrismaClient();
@@ -148,7 +152,7 @@ function createMockPrismaClient() {
           type: args.data.type,
           categoryId: catId || 14,
           category: catName || 'Miscellaneous',
-          date: args.data.date,
+          date: args.data.date instanceof Date ? args.data.date.toISOString().slice(0, 10) : args.data.date,
           notes: args.data.notes || ''
         };
         mockData.transactions.push(newRecord);
@@ -182,7 +186,8 @@ function createMockPrismaClient() {
           id: current.id, // preserve id
           categoryId: catId,
           category: catName,
-          amount: args.data.amount !== undefined ? parseFloat(args.data.amount) : current.amount
+          amount: args.data.amount !== undefined ? parseFloat(args.data.amount) : current.amount,
+          date: args.data.date instanceof Date ? args.data.date.toISOString().slice(0, 10) : (args.data.date !== undefined ? args.data.date : current.date)
         };
 
         mockData.transactions[index] = updated;

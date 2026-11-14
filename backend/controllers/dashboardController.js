@@ -66,7 +66,7 @@ async function getDashboardSummary(req, res, next) {
       const item = allTransactions[i];
       const amount = parseFloat(item.amount) || 0;
       const type = (item.type || '').toLowerCase();
-      const itemDate = item.date || '';
+      const itemDate = item.date instanceof Date ? item.date.toISOString().slice(0, 10) : String(item.date || '');
 
       // All-time calculation
       if (type === 'income') {
@@ -107,7 +107,7 @@ async function getDashboardSummary(req, res, next) {
         title: tx.title,
         amount: parseFloat(tx.amount),
         type: tx.type,
-        date: tx.date,
+        date: tx.date instanceof Date ? tx.date.toISOString().slice(0, 10) : tx.date,
         notes: tx.notes || '',
         categoryId: tx.categoryId,
         category: categoryName

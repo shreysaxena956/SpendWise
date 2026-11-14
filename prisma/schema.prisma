@@ -4,7 +4,8 @@
 // ============================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -33,7 +34,7 @@ model Transaction {
   title      String
   amount     Float
   type       String   // "Income" or "Expense"
-  date       String   // Format: "YYYY-MM-DD"
+  date       DateTime @db.Date
   notes      String?
   categoryId Int      @map("category_id")
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)

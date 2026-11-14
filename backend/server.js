@@ -98,8 +98,9 @@ app.use(errorHandler);
 // Start Server
 // ============================================================================
 
-// Export app for testing purposes
-if (process.env.NODE_ENV !== 'test') {
+// Only start standalone HTTP server when executed directly (node server.js)
+// and not in test or Vercel serverless function environments.
+if (require.main === module && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log('====================================================');
     console.log(` SpendWise Backend Server is running!`);

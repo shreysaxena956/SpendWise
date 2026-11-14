@@ -11,7 +11,7 @@ SpendWise is designed for a single user on one computer to record income and exp
 | Member | Module | Areas of Responsibility |
 | :--- | :--- | :--- |
 | **Member 1** | **Transaction Management Module** | **Frontend:** Income form, Expense form, Editing, Deletion, Validation<br>**Backend:** Transaction REST APIs (`GET`, `POST`, `PUT`, `DELETE`), controllers, routes<br>**DBMS:** Transactions table design, foreign key to Category, constraints, CRUD SQL queries, sample data, documentation |
-| **Member 2 (You)** | **Dashboard & Analytics Module** | **Frontend:** Responsive dashboard, 6 KPI financial summary cards, Category-wise Spending Donut Chart, Monthly Spending Overview 12-month Bar Chart, recent activity preview<br>**Backend:** Dashboard API (`/api/dashboard`), Monthly report API (`/api/reports/monthly`), Category report API (`/api/reports/category-wise`), calculations<br>**DBMS:** `database/analytics-queries.sql` (aggregate functions `SUM`, `COUNT`, `AVG`, `GROUP BY`, `JOIN`s, date functions, window functions), calculation documentation |
+| **Member 2 ** | **Dashboard & Analytics Module** | **Frontend:** Responsive dashboard, 6 KPI financial summary cards, Category-wise Spending Donut Chart, Monthly Spending Overview 12-month Bar Chart, recent activity preview<br>**Backend:** Dashboard API (`/api/dashboard`), Monthly report API (`/api/reports/monthly`), Category report API (`/api/reports/category-wise`), calculations<br>**DBMS:** `database/analytics-queries.sql` (aggregate functions `SUM`, `COUNT`, `AVG`, `GROUP BY`, `JOIN`s, date functions, window functions), calculation documentation |
 | **Member 3** | **Category & Settings Module** | Category CRUD, category validation, schema coordination |
 
 ---

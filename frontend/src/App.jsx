@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   getTransactions,
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  getCategories
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory
 } from './services/api';
 
 import DashboardView from './components/DashboardView';
@@ -13,8 +16,8 @@ import AddExpenseModal from './components/AddExpenseModal';
 import TransactionEditModal from './components/TransactionEditModal';
 import TransactionDeleteModal from './components/TransactionDeleteModal';
 import TransactionSummaryCards from './components/TransactionSummaryCards';
-import TransactionFilters from './components/TransactionFilters';
-import TransactionList from './components/TransactionList';
+import TransactionHistory from './components/TransactionHistory';
+import CategoryManager from './components/CategoryManager';
 import NotificationToast from './components/NotificationToast';
 
 /**
@@ -24,25 +27,20 @@ import NotificationToast from './components/NotificationToast';
  * Coordinates the entire SpendWise personal finance application:
  * 1. Dashboard & Analytics Module (Member 2 Responsibility)
  * 2. Transaction Management Module (Member 1 Responsibility)
- * 3. Category Management Integration (Member 3 Responsibility)
+ * 3. Categories & Transaction History Module (Member 3 Responsibility)
  * ============================================================================
  */
 export default function App() {
-  // Navigation active tab: 'dashboard' | 'transactions'
+  // Navigation active tab: 'dashboard' | 'transactions' | 'categories'
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Trigger to signal dashboard metrics refresh when transactions change
+  // Trigger to signal dashboard metrics refresh when data changes
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Main data state
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Filter and search state (for transactions tab)
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('');
 
   // Modal visibility state
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -141,43 +139,55 @@ export default function App() {
     }
   };
 
-  // Reset all filters
-  const handleResetFilters = () => {
-    setSearchTerm('');
-    setTypeFilter('All');
-    setCategoryFilter('');
+  // 6. Category CRUD Handlers (Member 3 Responsibility)
+  const handleAddCategory = async (categoryData) => {
+    try {
+      const created = await createCategory(categoryData);
+      setCategories((prev) => [...prev, created]);
+      showNotification(`Category '${created.name}' created successfully!`);
+      return created;
+    } catch (err) {
+      showNotification(err.message || 'Failed to create category.', 'error');
+      throw err;
+    }
   };
 
-  // Compute filtered transactions in-memory
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      // 1. Filter by Type
-      if (
-        typeFilter !== 'All' &&
-        tx.type &&
-        tx.type.toLowerCase() !== typeFilter.toLowerCase()
-      ) {
-        return false;
-      }
+  const handleUpdateCategory = async (id, updatedData) => {
+    try {
+      const updated = await updateCategory(id, updatedData);
+      setCategories((prev) =>
+        prev.map((c) => (c.id === id ? updated : c))
+      );
+      // Reload transactions to reflect any updated category names
+      const refreshedTx = await getTransactions();
+      setTransactions(refreshedTx);
+      setRefreshTrigger((prev) => prev + 1);
+      showNotification(`Category #${id} updated successfully!`);
+      return updated;
+    } catch (err) {
+      showNotification(err.message || 'Failed to update category.', 'error');
+      throw err;
+    }
+  };
 
-      // 2. Filter by Category
-      if (categoryFilter && tx.category !== categoryFilter) {
-        return false;
-      }
+  const handleDeleteCategory = async (id) => {
+    try {
+      const result = await deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => c.id !== id));
 
-      // 3. Filter by Search Query (Title or Notes)
-      if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase();
-        const titleMatch = tx.title && tx.title.toLowerCase().includes(query);
-        const notesMatch = tx.notes && tx.notes.toLowerCase().includes(query);
-        if (!titleMatch && !notesMatch) {
-          return false;
-        }
-      }
+      // Reload transactions because orphaned transactions are reassigned to 'Uncategorised'
+      const refreshedTx = await getTransactions();
+      setTransactions(refreshedTx);
+      setRefreshTrigger((prev) => prev + 1);
 
-      return true;
-    });
-  }, [transactions, typeFilter, categoryFilter, searchTerm]);
+      showNotification(
+        result.message || 'Category deleted and records reassigned to Uncategorised.'
+      );
+    } catch (err) {
+      showNotification(err.message || 'Failed to delete category.', 'error');
+      throw err;
+    }
+  };
 
   return (
     <div className="app-container">
@@ -221,20 +231,31 @@ export default function App() {
             <span className="nav-tab-icon">📊</span>
             <span>Dashboard & Analytics</span>
           </button>
+
           <button
             type="button"
             className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
             onClick={() => setActiveTab('transactions')}
           >
-            <span className="nav-tab-icon">📑</span>
-            <span>Transactions</span>
+            <span className="nav-tab-icon">📜</span>
+            <span>Transaction History</span>
             <span className="nav-tab-count">{transactions.length}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-tab ${activeTab === 'categories' ? 'active' : ''}`}
+            onClick={() => setActiveTab('categories')}
+          >
+            <span className="nav-tab-icon">🏷️</span>
+            <span>Category Management</span>
+            <span className="nav-tab-count">{categories.length}</span>
           </button>
         </div>
       </nav>
 
-      {/* Main Content Area: Switch between Dashboard View and Transactions View */}
-      {activeTab === 'dashboard' ? (
+      {/* Main Content Area */}
+      {activeTab === 'dashboard' && (
         <DashboardView
           onAddIncome={() => setIsIncomeModalOpen(true)}
           onAddExpense={() => setIsExpenseModalOpen(true)}
@@ -242,60 +263,33 @@ export default function App() {
           refreshTrigger={refreshTrigger}
           showNotification={showNotification}
         />
-      ) : (
+      )}
+
+      {activeTab === 'transactions' && (
         <>
           {/* Financial Summary KPI Cards (Member 1) */}
           <TransactionSummaryCards transactions={transactions} />
 
-          {/* Main Transactions Management Card (Member 1) */}
-          <main className="card">
-            <div className="card-header">
-              <div className="card-title">
-                <span>📑</span>
-                <span>Transaction Records</span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: 'var(--gray-500)',
-                    marginLeft: 4
-                  }}
-                >
-                  ({filteredTransactions.length} of {transactions.length})
-                </span>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={loadInitialData}
-                title="Refresh transactions from database"
-              >
-                🔄 Refresh
-              </button>
-            </div>
-
-            {/* Search & Filter Toolbar */}
-            <TransactionFilters
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              typeFilter={typeFilter}
-              onTypeFilterChange={setTypeFilter}
-              categoryFilter={categoryFilter}
-              onCategoryFilterChange={setCategoryFilter}
-              categories={categories}
-              onResetFilters={handleResetFilters}
-            />
-
-            {/* Transactions Table / List */}
-            <TransactionList
-              transactions={filteredTransactions}
-              isLoading={isLoading}
-              onEdit={(tx) => setEditingTransaction(tx)}
-              onDelete={(tx) => setDeletingTransaction(tx)}
-            />
-          </main>
+          {/* New Transaction History Component (Member 3 - Replaces Old Component) */}
+          <TransactionHistory
+            transactions={transactions}
+            categories={categories}
+            isLoading={isLoading}
+            onEdit={(tx) => setEditingTransaction(tx)}
+            onDelete={(tx) => setDeletingTransaction(tx)}
+            onRefresh={loadInitialData}
+          />
         </>
+      )}
+
+      {activeTab === 'categories' && (
+        <CategoryManager
+          categories={categories}
+          onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
+          isLoading={isLoading}
+        />
       )}
 
       {/* 1. Add Income Modal */}

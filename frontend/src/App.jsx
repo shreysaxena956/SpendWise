@@ -7,6 +7,7 @@ import {
   getCategories
 } from './services/api';
 
+import DashboardView from './components/DashboardView';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddExpenseModal from './components/AddExpenseModal';
 import TransactionEditModal from './components/TransactionEditModal';
@@ -20,21 +21,25 @@ import NotificationToast from './components/NotificationToast';
  * ============================================================================
  * SpendWise – Main Application Component
  * ============================================================================
- * Coordinates the Transaction Management Module:
- * 1. Add Income form modal
- * 2. Add Expense form modal
- * 3. Transaction editing modal
- * 4. Transaction deletion functionality with confirmation
- * 5. Input validation and feedback notifications
+ * Coordinates the entire SpendWise personal finance application:
+ * 1. Dashboard & Analytics Module (Member 2 Responsibility)
+ * 2. Transaction Management Module (Member 1 Responsibility)
+ * 3. Category Management Integration (Member 3 Responsibility)
  * ============================================================================
  */
 export default function App() {
+  // Navigation active tab: 'dashboard' | 'transactions'
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Trigger to signal dashboard metrics refresh when transactions change
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   // Main data state
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filter and search state
+  // Filter and search state (for transactions tab)
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -87,6 +92,7 @@ export default function App() {
     try {
       const created = await createTransaction(payload);
       setTransactions((prev) => [created, ...prev]);
+      setRefreshTrigger((prev) => prev + 1);
       showNotification(`Income '${created.title}' recorded successfully!`);
     } catch (err) {
       showNotification(err.message || 'Failed to record income.', 'error');
@@ -99,6 +105,7 @@ export default function App() {
     try {
       const created = await createTransaction(payload);
       setTransactions((prev) => [created, ...prev]);
+      setRefreshTrigger((prev) => prev + 1);
       showNotification(`Expense '${created.title}' recorded successfully!`);
     } catch (err) {
       showNotification(err.message || 'Failed to record expense.', 'error');
@@ -113,6 +120,7 @@ export default function App() {
       setTransactions((prev) =>
         prev.map((t) => (t.id === id ? updated : t))
       );
+      setRefreshTrigger((prev) => prev + 1);
       showNotification(`Transaction #${id} updated successfully!`);
     } catch (err) {
       showNotification(err.message || 'Failed to update transaction.', 'error');
@@ -125,6 +133,7 @@ export default function App() {
     try {
       await deleteTransaction(id);
       setTransactions((prev) => prev.filter((t) => t.id !== id));
+      setRefreshTrigger((prev) => prev + 1);
       showNotification(`Transaction #${id} was deleted successfully.`);
     } catch (err) {
       showNotification(err.message || 'Failed to delete transaction.', 'error');
@@ -178,11 +187,11 @@ export default function App() {
           <div className="brand-logo">💰</div>
           <div className="brand-info">
             <h1>SpendWise</h1>
-            <p>Personal Finance Desktop App • Member 1: Transaction Management</p>
+            <p>Personal Finance Desktop App • Offline-First Single User</p>
           </div>
         </div>
 
-        {/* Action Buttons: Add Income & Add Expense */}
+        {/* Global Action Buttons: Add Income & Add Expense */}
         <div className="header-actions">
           <button
             type="button"
@@ -201,57 +210,93 @@ export default function App() {
         </div>
       </header>
 
-      {/* Financial Summary KPI Cards */}
-      <TransactionSummaryCards transactions={transactions} />
-
-      {/* Main Transactions Management Card */}
-      <main className="card">
-        <div className="card-header">
-          <div className="card-title">
-            <span>📑</span>
-            <span>Transaction Records</span>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--gray-500)',
-                marginLeft: 4
-              }}
-            >
-              ({filteredTransactions.length} of {transactions.length})
-            </span>
-          </div>
-
+      {/* Navigation View Tabs */}
+      <nav className="nav-tabs-container">
+        <div className="nav-tabs">
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={loadInitialData}
-            title="Refresh transactions from database"
+            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
           >
-            🔄 Refresh
+            <span className="nav-tab-icon">📊</span>
+            <span>Dashboard & Analytics</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('transactions')}
+          >
+            <span className="nav-tab-icon">📑</span>
+            <span>Transactions</span>
+            <span className="nav-tab-count">{transactions.length}</span>
           </button>
         </div>
+      </nav>
 
-        {/* Search & Filter Toolbar */}
-        <TransactionFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          categories={categories}
-          onResetFilters={handleResetFilters}
+      {/* Main Content Area: Switch between Dashboard View and Transactions View */}
+      {activeTab === 'dashboard' ? (
+        <DashboardView
+          onAddIncome={() => setIsIncomeModalOpen(true)}
+          onAddExpense={() => setIsExpenseModalOpen(true)}
+          onViewAllTransactions={() => setActiveTab('transactions')}
+          refreshTrigger={refreshTrigger}
+          showNotification={showNotification}
         />
+      ) : (
+        <>
+          {/* Financial Summary KPI Cards (Member 1) */}
+          <TransactionSummaryCards transactions={transactions} />
 
-        {/* Transactions Table / List */}
-        <TransactionList
-          transactions={filteredTransactions}
-          isLoading={isLoading}
-          onEdit={(tx) => setEditingTransaction(tx)}
-          onDelete={(tx) => setDeletingTransaction(tx)}
-        />
-      </main>
+          {/* Main Transactions Management Card (Member 1) */}
+          <main className="card">
+            <div className="card-header">
+              <div className="card-title">
+                <span>📑</span>
+                <span>Transaction Records</span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--gray-500)',
+                    marginLeft: 4
+                  }}
+                >
+                  ({filteredTransactions.length} of {transactions.length})
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={loadInitialData}
+                title="Refresh transactions from database"
+              >
+                🔄 Refresh
+              </button>
+            </div>
+
+            {/* Search & Filter Toolbar */}
+            <TransactionFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              typeFilter={typeFilter}
+              onTypeFilterChange={setTypeFilter}
+              categoryFilter={categoryFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              categories={categories}
+              onResetFilters={handleResetFilters}
+            />
+
+            {/* Transactions Table / List */}
+            <TransactionList
+              transactions={filteredTransactions}
+              isLoading={isLoading}
+              onEdit={(tx) => setEditingTransaction(tx)}
+              onDelete={(tx) => setDeletingTransaction(tx)}
+            />
+          </main>
+        </>
+      )}
 
       {/* 1. Add Income Modal */}
       <AddIncomeModal
@@ -294,4 +339,3 @@ export default function App() {
     </div>
   );
 }
-

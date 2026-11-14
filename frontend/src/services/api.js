@@ -176,11 +176,19 @@ export async function getCategories(type = '') {
 }
 
 /**
- * 7. Fetch dashboard summary (Total income, total expense, balance)
+ * 7. Fetch dashboard summary (Total income, total expense, balance, monthly metrics)
+ * @param {Object} params - { year, month } (optional)
  */
-export async function getDashboardSummary() {
+export async function getDashboardSummary(params = {}) {
   try {
-    const response = await fetch(`${API_BASE}/dashboard`);
+    const query = new URLSearchParams();
+    if (params.year) query.append('year', params.year);
+    if (params.month) query.append('month', params.month);
+
+    const queryString = query.toString();
+    const url = queryString ? `${API_BASE}/dashboard?${queryString}` : `${API_BASE}/dashboard`;
+
+    const response = await fetch(url);
     const result = await response.json();
 
     if (!response.ok) {
@@ -190,6 +198,62 @@ export async function getDashboardSummary() {
     return result.data;
   } catch (error) {
     console.error('API Error in getDashboardSummary:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 8. Fetch monthly report (Income, expenses, balance, category expenses, 12-month overview)
+ * @param {number} year
+ * @param {number} month
+ */
+export async function getMonthlyReport(year, month) {
+  try {
+    const query = new URLSearchParams();
+    if (year) query.append('year', year);
+    if (month) query.append('month', month);
+
+    const queryString = query.toString();
+    const url = queryString ? `${API_BASE}/reports/monthly?${queryString}` : `${API_BASE}/reports/monthly`;
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to fetch monthly report');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('API Error in getMonthlyReport:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 9. Fetch category-wise spending report
+ * @param {Object} params - { type, year, month }
+ */
+export async function getCategoryWiseReport(params = {}) {
+  try {
+    const query = new URLSearchParams();
+    if (params.type) query.append('type', params.type);
+    if (params.year) query.append('year', params.year);
+    if (params.month) query.append('month', params.month);
+
+    const queryString = query.toString();
+    const url = queryString ? `${API_BASE}/reports/category-wise?${queryString}` : `${API_BASE}/reports/category-wise`;
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to fetch category report');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('API Error in getCategoryWiseReport:', error.message);
     throw error;
   }
 }

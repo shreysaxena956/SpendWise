@@ -199,8 +199,11 @@ const server = app.listen(0, async () => {
       dashRes.status === 200 &&
       typeof dashRes.body.data.totalIncome === 'number' &&
       typeof dashRes.body.data.totalExpenses === 'number' &&
-      dashRes.body.data.currentBalance === (dashRes.body.data.totalIncome - dashRes.body.data.totalExpenses),
-      'GET /api/dashboard returns correct income, expenses, and currentBalance formula'
+      dashRes.body.data.currentBalance === (dashRes.body.data.totalIncome - dashRes.body.data.totalExpenses) &&
+      typeof dashRes.body.data.monthlyIncome === 'number' &&
+      typeof dashRes.body.data.monthlyExpenses === 'number' &&
+      Array.isArray(dashRes.body.data.recentTransactions),
+      'GET /api/dashboard returns correct income, expenses, currentBalance, monthly metrics, and recent transactions'
     );
 
     // 9. Monthly Report API
@@ -209,8 +212,11 @@ const server = app.listen(0, async () => {
       monthlyRes.status === 200 &&
       typeof monthlyRes.body.data.monthlyIncome === 'number' &&
       typeof monthlyRes.body.data.monthlyExpenses === 'number' &&
-      monthlyRes.body.data.monthlyBalance === (monthlyRes.body.data.monthlyIncome - monthlyRes.body.data.monthlyExpenses),
-      'GET /api/reports/monthly returns monthly metrics and balance'
+      monthlyRes.body.data.monthlyBalance === (monthlyRes.body.data.monthlyIncome - monthlyRes.body.data.monthlyExpenses) &&
+      Array.isArray(monthlyRes.body.data.categoryExpenses) &&
+      Array.isArray(monthlyRes.body.data.monthsOverview) &&
+      monthlyRes.body.data.monthsOverview.length === 12,
+      'GET /api/reports/monthly returns monthly metrics, balance, categoryExpenses, and 12-month overview'
     );
 
     // 10. Category-wise Report API
@@ -218,8 +224,9 @@ const server = app.listen(0, async () => {
     assert(
       catReportRes.status === 200 &&
       Array.isArray(catReportRes.body.data.categories) &&
-      catReportRes.body.data.categories.length > 0,
-      'GET /api/reports/category-wise returns category breakdown with percentages'
+      catReportRes.body.data.categories.length > 0 &&
+      catReportRes.body.data.categories[0].percentage !== undefined,
+      'GET /api/reports/category-wise returns category breakdown with percentages and counts'
     );
 
     // 11. 404 Unknown Route

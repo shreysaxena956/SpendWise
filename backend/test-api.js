@@ -118,6 +118,24 @@ const server = app.listen(0, async () => {
     });
     assert(invalidAmt.status === 400, 'POST /api/transactions with negative amount returns 400');
 
+    const zeroAmt = await request('POST', '/api/transactions', {
+      title: 'Zero Amount Item',
+      amount: 0,
+      type: 'Expense',
+      category: 'Shopping',
+      date: '2026-11-03'
+    });
+    assert(zeroAmt.status === 400, 'POST /api/transactions with zero amount returns 400');
+
+    const emptyTitle = await request('POST', '/api/transactions', {
+      title: '   ',
+      amount: 200,
+      type: 'Expense',
+      category: 'Shopping',
+      date: '2026-11-03'
+    });
+    assert(emptyTitle.status === 400, 'POST /api/transactions with empty title returns 400');
+
     const invalidType = await request('POST', '/api/transactions', {
       title: 'Bad Type',
       amount: 500,
@@ -135,6 +153,21 @@ const server = app.listen(0, async () => {
       date: '2026-11-03'
     });
     assert(invalidCat.status === 400, 'POST /api/transactions with invalid category returns 400');
+
+    // 4b. Transaction created using categoryId foreign key
+    const txWithCatId = await request('POST', '/api/transactions', {
+      title: 'Freelance Design Payment',
+      amount: 8000,
+      type: 'Income',
+      categoryId: 2, // Freelance category ID
+      date: '2026-11-04',
+      notes: 'Mobile app UI design'
+    });
+    assert(txWithCatId.status === 201 && txWithCatId.body.data.categoryId === 2, 'POST /api/transactions with categoryId FK works properly');
+    const catIdTxId = txWithCatId.body.data.id;
+
+    // Clean up created test transaction
+    await request('DELETE', `/api/transactions/${catIdTxId}`);
 
     // 5. Transaction Retrieval & Filters
     const allTx = await request('GET', '/api/transactions');

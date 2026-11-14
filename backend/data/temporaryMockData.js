@@ -6,19 +6,13 @@
  * This file is strictly a temporary mock dataset created to allow the backend
  * and frontend to be developed and tested before database integration.
  *
- * DO NOT TREAT THIS AS THE FINAL DATABASE.
- *
- * The DBMS member of our group is solely responsible for:
- *  - PostgreSQL table design and ER diagram
- *  - Final Prisma schema and migrations
- *  - Primary keys, foreign keys, relationships, and constraints
- *
- * Once the database member supplies the final schema and migrations,
- * this temporary file can be archived or removed by setting USE_MOCK=false in .env.
+ * It models the shared SpendWise database schema agreed upon by the team:
+ * - Category: id, name, type
+ * - Transaction: id, title, amount, type, date, notes, categoryId (FK), category
  * ============================================================================
  */
 
-// Initial categories list
+// Initial categories list (Coordinated with Member 3)
 let categories = [
   { id: 1, name: "Salary", type: "Income" },
   { id: 2, name: "Freelance", type: "Income" },
@@ -41,13 +35,15 @@ const now = new Date();
 const currentYear = now.getFullYear();
 const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
 
-// Initial sample transactions
+// Initial sample transactions (Member 1 Responsibility)
+// Contains categoryId referencing Category primary key and category name for compatibility
 let transactions = [
   {
     id: 1,
     title: "Monthly Salary",
     amount: 50000.0,
     type: "Income",
+    categoryId: 1,
     category: "Salary",
     date: `${currentYear}-${currentMonth}-01`,
     notes: "Main full-time job salary for the month"
@@ -57,6 +53,7 @@ let transactions = [
     title: "Apartment Rent",
     amount: 15000.0,
     type: "Expense",
+    categoryId: 7,
     category: "Rent & Housing",
     date: `${currentYear}-${currentMonth}-02`,
     notes: "Paid via bank transfer"
@@ -66,6 +63,7 @@ let transactions = [
     title: "Weekly Grocery Run",
     amount: 3200.0,
     type: "Expense",
+    categoryId: 8,
     category: "Groceries",
     date: `${currentYear}-${currentMonth}-05`,
     notes: "Vegetables, fruits, and essentials"
@@ -75,6 +73,7 @@ let transactions = [
     title: "Website Freelance Gig",
     amount: 12000.0,
     type: "Income",
+    categoryId: 2,
     category: "Freelance",
     date: `${currentYear}-${currentMonth}-10`,
     notes: "Frontend bug fixing project"
@@ -84,6 +83,7 @@ let transactions = [
     title: "Electricity & Internet Bill",
     amount: 2400.0,
     type: "Expense",
+    categoryId: 9,
     category: "Utilities",
     date: `${currentYear}-${currentMonth}-12`,
     notes: "Broadband and power"
@@ -93,6 +93,7 @@ let transactions = [
     title: "Dinner with Friends",
     amount: 1850.0,
     type: "Expense",
+    categoryId: 6,
     category: "Food & Dining",
     date: `${currentYear}-${currentMonth}-14`,
     notes: "Weekend dinner at bistro"
@@ -102,6 +103,7 @@ let transactions = [
     title: "Metro & Cab Commute",
     amount: 1200.0,
     type: "Expense",
+    categoryId: 10,
     category: "Transportation",
     date: `${currentYear}-${currentMonth}-18`,
     notes: "Monthly travel pass recharge"
@@ -111,6 +113,7 @@ let transactions = [
     title: "Movie Tickets & Snacks",
     amount: 900.0,
     type: "Expense",
+    categoryId: 11,
     category: "Entertainment",
     date: `${currentYear}-${currentMonth}-20`,
     notes: "Weekend movie outing"
@@ -127,4 +130,3 @@ module.exports = {
   getNextCategoryId: () => nextCategoryId++,
   getNextTransactionId: () => nextTransactionId++
 };
-

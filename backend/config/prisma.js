@@ -57,7 +57,7 @@ function createMockPrismaClient() {
 
         // Apply where filters if provided
         if (args.where) {
-          const { type, category, date } = args.where;
+          const { type, category, categoryId, date } = args.where;
 
           if (type) {
             results = results.filter(
@@ -67,7 +67,13 @@ function createMockPrismaClient() {
 
           if (category) {
             results = results.filter(
-              t => t.category.toLowerCase() === category.toLowerCase()
+              t => t.category && t.category.toLowerCase() === category.toLowerCase()
+            );
+          }
+
+          if (categoryId) {
+            results = results.filter(
+              t => Number(t.categoryId) === Number(categoryId)
             );
           }
 
@@ -116,12 +122,32 @@ function createMockPrismaClient() {
       },
 
       async create(args = {}) {
+        let catId = args.data.categoryId ? Number(args.data.categoryId) : null;
+        let catName = args.data.category || '';
+
+        // Resolve missing categoryId or category name
+        if (!catId && catName) {
+          const found = mockData.categories.find(
+            c => c.name.toLowerCase() === catName.toLowerCase()
+          );
+          if (found) {
+            catId = found.id;
+            catName = found.name;
+          }
+        } else if (catId && !catName) {
+          const found = mockData.categories.find(c => c.id === catId);
+          if (found) {
+            catName = found.name;
+          }
+        }
+
         const newRecord = {
           id: mockData.getNextTransactionId(),
           title: args.data.title,
           amount: parseFloat(args.data.amount),
           type: args.data.type,
-          category: args.data.category,
+          categoryId: catId || 14,
+          category: catName || 'Miscellaneous',
           date: args.data.date,
           notes: args.data.notes || ''
         };
@@ -137,10 +163,25 @@ function createMockPrismaClient() {
         }
 
         const current = mockData.transactions[index];
+        let catId = args.data.categoryId !== undefined ? Number(args.data.categoryId) : current.categoryId;
+        let catName = args.data.category !== undefined ? args.data.category : current.category;
+
+        if (args.data.categoryId !== undefined && args.data.category === undefined) {
+          const found = mockData.categories.find(c => c.id === catId);
+          if (found) catName = found.name;
+        } else if (args.data.category !== undefined && args.data.categoryId === undefined) {
+          const found = mockData.categories.find(
+            c => c.name.toLowerCase() === catName.toLowerCase()
+          );
+          if (found) catId = found.id;
+        }
+
         const updated = {
           ...current,
           ...args.data,
           id: current.id, // preserve id
+          categoryId: catId,
+          category: catName,
           amount: args.data.amount !== undefined ? parseFloat(args.data.amount) : current.amount
         };
 

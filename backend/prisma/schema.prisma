@@ -1,0 +1,47 @@
+// ============================================================================
+// SpendWise - Prisma Schema Definition
+// Shared Schema: Coordinated between Member 1 (Transactions) and Member 3 (Categories)
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Category Model (Coordinated with Member 3)
+// ----------------------------------------------------------------------------
+model Category {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  type         String        // "Income" or "Expense"
+  createdAt    DateTime      @default(now()) @map("created_at")
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+// ----------------------------------------------------------------------------
+// Transaction Model (Member 1 Responsibility)
+// ----------------------------------------------------------------------------
+model Transaction {
+  id         Int      @id @default(autoincrement())
+  title      String
+  amount     Float
+  type       String   // "Income" or "Expense"
+  date       String   // Format: "YYYY-MM-DD"
+  notes      String?
+  categoryId Int      @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([date(sort: Desc)])
+  @@index([type])
+  @@index([categoryId])
+  @@map("transactions")
+}
+

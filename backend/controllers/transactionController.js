@@ -4,7 +4,7 @@
  * ============================================================================
  * Handles business logic for transactions:
  * - Create a transaction (Income or Expense)
- * - View all transactions (with filtering by month, year, type, and category)
+ * - View all transactions (with filtering by month, year, type, category, search)
  * - View a single transaction by ID
  * - Update an existing transaction
  * - Delete a transaction
@@ -15,6 +15,7 @@ const prisma = require('../config/prisma');
 
 /**
  * Helper function to validate and normalize transaction payload
+ * Validates: title, amount, type, category/categoryId, date, notes
  */
 async function validateTransactionData(data, isUpdate = false) {
   const errors = [];
@@ -54,26 +55,52 @@ async function validateTransactionData(data, isUpdate = false) {
     }
   }
 
-  // 4. Validate category
-  if (!isUpdate || data.category !== undefined) {
-    if (!data.category || typeof data.category !== 'string' || data.category.trim() === '') {
-      errors.push('Category is required and cannot be empty.');
-    } else {
-      const categoryName = data.category.trim();
-      // Check if category exists in database
-      const categoryExists = await prisma.category.findFirst({
-        where: { name: categoryName }
-      });
+  // 4. Validate category and categoryId (Coordinated with Member 3)
+  if (!isUpdate || data.category !== undefined || data.categoryId !== undefined) {
+    let categoryRecord = null;
 
-      if (!categoryExists) {
-        errors.push(`Category '${categoryName}' does not exist. Please choose an existing category or create it first.`);
-      } else {
-        normalized.category = categoryExists.name;
+    // Check if categoryId is provided as number or numeric string
+    if (data.categoryId !== undefined && data.categoryId !== null && data.categoryId !== '') {
+      const parsedCatId = parseInt(data.categoryId, 10);
+      if (!isNaN(parsedCatId)) {
+        categoryRecord = await prisma.category.findUnique({
+          where: { id: parsedCatId }
+        });
       }
+    }
+
+    // Check if category name is provided
+    if (!categoryRecord && data.category !== undefined && data.category !== null) {
+      if (typeof data.category === 'string' && data.category.trim() !== '') {
+        const catStr = data.category.trim();
+        const parsedNumeric = parseInt(catStr, 10);
+        if (!isNaN(parsedNumeric) && String(parsedNumeric) === catStr) {
+          categoryRecord = await prisma.category.findUnique({
+            where: { id: parsedNumeric }
+          });
+        }
+        if (!categoryRecord) {
+          categoryRecord = await prisma.category.findFirst({
+            where: { name: catStr }
+          });
+        }
+      } else if (typeof data.category === 'number') {
+        categoryRecord = await prisma.category.findUnique({
+          where: { id: data.category }
+        });
+      }
+    }
+
+    if (!categoryRecord) {
+      const provided = data.category || data.categoryId || 'none';
+      errors.push(`Category '${provided}' does not exist. Please choose an existing category.`);
+    } else {
+      normalized.categoryId = categoryRecord.id;
+      normalized.category = categoryRecord.name;
     }
   }
 
-  // 5. Validate date
+  // 5. Validate date (format: YYYY-MM-DD)
   if (!isUpdate || data.date !== undefined) {
     if (!data.date) {
       errors.push('Date is required (format: YYYY-MM-DD).');
@@ -98,10 +125,10 @@ async function validateTransactionData(data, isUpdate = false) {
   return { isValid: errors.length === 0, errors, data: normalized };
 }
 
-// 1. Get all transactions (with query parameter filtering)
+// 1. Get all transactions (with query parameter filtering & search)
 async function getAllTransactions(req, res, next) {
   try {
-    const { type, category, month, year, startDate, endDate, sortBy, order } = req.query;
+    const { type, category, categoryId, month, year, startDate, endDate, search, sortBy, order } = req.query;
 
     const where = {};
 
@@ -119,6 +146,14 @@ async function getAllTransactions(req, res, next) {
       where.category = category.trim();
     }
 
+    // Filter by category ID
+    if (categoryId) {
+      const parsedCatId = parseInt(categoryId, 10);
+      if (!isNaN(parsedCatId)) {
+        where.categoryId = parsedCatId;
+      }
+    }
+
     // Filter by month and year
     if (year || month) {
       const targetYear = parseInt(year, 10) || new Date().getFullYear();
@@ -126,25 +161,19 @@ async function getAllTransactions(req, res, next) {
       if (month) {
         const targetMonth = parseInt(month, 10);
         if (targetMonth >= 1 && targetMonth <= 12) {
-          // Construct range for that month
           const startMonthStr = String(targetMonth).padStart(2, '0');
           const firstDay = `${targetYear}-${startMonthStr}-01`;
-
-          // Last day of target month (day 0 of next month gives last day of current)
           const lastDayNum = new Date(targetYear, targetMonth, 0).getDate();
           const lastDay = `${targetYear}-${startMonthStr}-${String(lastDayNum).padStart(2, '0')}`;
-
           where.date = { gte: firstDay, lte: lastDay };
         }
       } else {
-        // Full year filter
         where.date = {
           gte: `${targetYear}-01-01`,
           lte: `${targetYear}-12-31`
         };
       }
     } else if (startDate || endDate) {
-      // Date range filter
       where.date = {};
       if (startDate) where.date.gte = startDate;
       if (endDate) where.date.lte = endDate;
@@ -155,10 +184,19 @@ async function getAllTransactions(req, res, next) {
     const sortOrder = order === 'asc' ? 'asc' : 'desc';
     const orderBy = { [sortField]: sortOrder };
 
-    const transactions = await prisma.transaction.findMany({
+    let transactions = await prisma.transaction.findMany({
       where,
       orderBy
     });
+
+    // Optional text search in title or notes
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      const keyword = search.trim().toLowerCase();
+      transactions = transactions.filter(t =>
+        (t.title && t.title.toLowerCase().includes(keyword)) ||
+        (t.notes && t.notes.toLowerCase().includes(keyword))
+      );
+    }
 
     res.status(200).json({
       success: true,
@@ -324,4 +362,3 @@ module.exports = {
   updateTransaction,
   deleteTransaction
 };
-

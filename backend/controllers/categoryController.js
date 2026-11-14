@@ -1,26 +1,34 @@
 /**
  * ============================================================================
  * SpendWise - Category Controller
+ * Module: Categories & Transaction History (Member 3 Responsibility)
  * ============================================================================
  * Handles business logic for categories:
- * - View all categories (with optional type filtering)
- * - View single category by ID
- * - Create a new category
- * - Update an existing category
- * - Delete a category (with safety check for existing transactions)
+ * - View all categories (GET /api/categories, with optional ?type= filter)
+ * - View single category by ID (GET /api/categories/:id)
+ * - Create a new category (POST /api/categories)
+ * - Update an existing category (PUT /api/categories/:id)
+ * - Delete a category (DELETE /api/categories/:id)
+ *
+ * Special Requirement:
+ * When deleting a category, all associated transactions are automatically
+ * reassigned to the default 'Uncategorised' category to prevent orphan records.
  * ============================================================================
  */
 
 const prisma = require('../config/prisma');
 
-// 1. Get all categories
+/**
+ * 1. Get all categories
+ * Supports optional query parameter: ?type=Income or ?type=Expense
+ */
 async function getAllCategories(req, res, next) {
   try {
     const { type } = req.query;
 
     const where = {};
-    if (type) {
-      // Normalize type: 'income' -> 'Income', 'expense' -> 'Expense'
+    if (type && type !== 'All') {
+      // Normalize type to Title Case (e.g., 'income' -> 'Income')
       const normalizedType =
         type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
       where.type = normalizedType;
@@ -38,7 +46,9 @@ async function getAllCategories(req, res, next) {
   }
 }
 
-// 2. Get category by ID
+/**
+ * 2. Get category by ID
+ */
 async function getCategoryById(req, res, next) {
   try {
     const categoryId = parseInt(req.params.id, 10);
@@ -70,12 +80,15 @@ async function getCategoryById(req, res, next) {
   }
 }
 
-// 3. Create a new category
+/**
+ * 3. Create a new category
+ * Validates name, type, and checks for duplicate names
+ */
 async function createCategory(req, res, next) {
   try {
     const { name, type } = req.body;
 
-    // Validation: Name is required and must not be empty
+    // Validation 1: Name is required and cannot be empty or just whitespace
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({
         success: false,
@@ -85,7 +98,7 @@ async function createCategory(req, res, next) {
 
     const trimmedName = name.trim();
 
-    // Validation: Type must be either 'Income' or 'Expense'
+    // Validation 2: Type must be either 'Income' or 'Expense'
     let normalizedType = 'Expense';
     if (type) {
       normalizedType =
@@ -98,19 +111,20 @@ async function createCategory(req, res, next) {
       }
     }
 
-    // Check if category name already exists
-    const existing = await prisma.category.findFirst({
-      where: { name: trimmedName }
-    });
+    // Validation 3: Duplicate category handling (case-insensitive check)
+    const allCategories = await prisma.category.findMany();
+    const isDuplicate = allCategories.some(
+      (c) => c.name.toLowerCase() === trimmedName.toLowerCase()
+    );
 
-    if (existing) {
+    if (isDuplicate) {
       return res.status(400).json({
         success: false,
-        error: `Category '${trimmedName}' already exists.`
+        error: `Category '${trimmedName}' already exists. Please choose a different name.`
       });
     }
 
-    // Create category
+    // Create the new category
     const newCategory = await prisma.category.create({
       data: {
         name: trimmedName,
@@ -120,7 +134,7 @@ async function createCategory(req, res, next) {
 
     res.status(201).json({
       success: true,
-      message: 'Category created successfully.',
+      message: `Category '${newCategory.name}' created successfully.`,
       data: newCategory
     });
   } catch (error) {
@@ -128,7 +142,10 @@ async function createCategory(req, res, next) {
   }
 }
 
-// 4. Update an existing category
+/**
+ * 4. Update an existing category
+ * Validates ID, name, type, and avoids duplicate naming
+ */
 async function updateCategory(req, res, next) {
   try {
     const categoryId = parseInt(req.params.id, 10);
@@ -163,14 +180,27 @@ async function updateCategory(req, res, next) {
           error: 'Category name cannot be empty.'
         });
       }
+
       const trimmedName = name.trim();
 
-      // Check if another category already has this name
-      const duplicate = await prisma.category.findFirst({
-        where: { name: trimmedName }
-      });
+      // Protect the default 'Uncategorised' category from being renamed
+      if (
+        existing.name.toLowerCase() === 'uncategorised' &&
+        trimmedName.toLowerCase() !== 'uncategorised'
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "The default 'Uncategorised' category cannot be renamed."
+        });
+      }
 
-      if (duplicate && duplicate.id !== categoryId) {
+      // Check for duplicate name across other categories (case-insensitive)
+      const allCategories = await prisma.category.findMany();
+      const isDuplicate = allCategories.some(
+        (c) => c.id !== categoryId && c.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (isDuplicate) {
         return res.status(400).json({
           success: false,
           error: `Another category named '${trimmedName}' already exists.`
@@ -198,9 +228,22 @@ async function updateCategory(req, res, next) {
       data: updateData
     });
 
+    // If the category name changed, also update the category name on existing transactions
+    if (updateData.name && updateData.name !== existing.name) {
+      const allTx = await prisma.transaction.findMany();
+      for (const tx of allTx) {
+        if (Number(tx.categoryId) === categoryId) {
+          await prisma.transaction.update({
+            where: { id: tx.id },
+            data: { category: updateData.name }
+          });
+        }
+      }
+    }
+
     res.status(200).json({
       success: true,
-      message: 'Category updated successfully.',
+      message: `Category #${categoryId} updated successfully.`,
       data: updated
     });
   } catch (error) {
@@ -208,7 +251,13 @@ async function updateCategory(req, res, next) {
   }
 }
 
-// 5. Delete a category
+/**
+ * 5. Delete a category
+ * Requirement:
+ * If deleting a record, handle orphan records appropriately by putting
+ * them in 'Uncategorised' category and then delete.
+ * The default 'Uncategorised' category itself cannot be deleted.
+ */
 async function deleteCategory(req, res, next) {
   try {
     const categoryId = parseInt(req.params.id, 10);
@@ -220,7 +269,7 @@ async function deleteCategory(req, res, next) {
       });
     }
 
-    // Check if category exists
+    // 1. Check if category exists
     const existing = await prisma.category.findUnique({
       where: { id: categoryId }
     });
@@ -232,26 +281,65 @@ async function deleteCategory(req, res, next) {
       });
     }
 
-    // Check if any transaction is using this category
-    const transactionsUsingCategory = await prisma.transaction.findMany({
-      where: { category: existing.name }
-    });
-
-    if (transactionsUsingCategory.length > 0) {
+    // 2. Prevent deleting the default 'Uncategorised' category
+    if (existing.name.toLowerCase() === 'uncategorised') {
       return res.status(400).json({
         success: false,
-        error: `Cannot delete category '${existing.name}' because it is linked to ${transactionsUsingCategory.length} transaction(s). Please reassign or delete those transactions first.`
+        error: "Cannot delete the default 'Uncategorised' category."
       });
     }
 
-    // Delete category
+    // 3. Find or ensure the 'Uncategorised' fallback category exists
+    let uncategorisedCat = await prisma.category.findFirst({
+      where: { name: 'Uncategorised' }
+    });
+
+    // If it doesn't exist, create it automatically
+    if (!uncategorisedCat) {
+      uncategorisedCat = await prisma.category.create({
+        data: {
+          name: 'Uncategorised',
+          type: 'Expense'
+        }
+      });
+    }
+
+    // 4. Find all transactions associated with the category being deleted
+    // Check both categoryId and category string for full compatibility
+    const allTransactions = await prisma.transaction.findMany();
+    let reassignedCount = 0;
+
+    for (let i = 0; i < allTransactions.length; i++) {
+      const tx = allTransactions[i];
+      const matchesId = Number(tx.categoryId) === categoryId;
+      const matchesName =
+        tx.category &&
+        tx.category.toLowerCase() === existing.name.toLowerCase();
+
+      if (matchesId || matchesName) {
+        await prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            categoryId: uncategorisedCat.id,
+            category: uncategorisedCat.name
+          }
+        });
+        reassignedCount++;
+      }
+    }
+
+    // 5. Safely delete the category now that all transactions have been migrated
     const deleted = await prisma.category.delete({
       where: { id: categoryId }
     });
 
     res.status(200).json({
       success: true,
-      message: `Category '${deleted.name}' deleted successfully.`,
+      message:
+        reassignedCount > 0
+          ? `Category '${deleted.name}' deleted successfully. ${reassignedCount} associated transaction(s) were moved to 'Uncategorised'.`
+          : `Category '${deleted.name}' deleted successfully.`,
+      reassignedCount,
       data: deleted
     });
   } catch (error) {
@@ -266,4 +354,3 @@ module.exports = {
   updateCategory,
   deleteCategory
 };
-

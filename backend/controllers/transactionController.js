@@ -189,7 +189,7 @@ async function getAllTransactions(req, res, next) {
       orderBy
     });
 
-    // Optional text search in title or notes
+    // Optional text search: find transactions by title (or notes)
     if (search && typeof search === 'string' && search.trim() !== '') {
       const keyword = search.trim().toLowerCase();
       transactions = transactions.filter(t =>
@@ -198,10 +198,30 @@ async function getAllTransactions(req, res, next) {
       );
     }
 
+    // Ensure category name is always populated using categoryId if missing
+    const categories = await prisma.category.findMany();
+    const catMap = {};
+    for (let i = 0; i < categories.length; i++) {
+      catMap[categories[i].id] = categories[i].name;
+    }
+
+    const formattedTransactions = transactions.map(tx => {
+      let resolvedCategory = tx.category;
+      if (!resolvedCategory && tx.categoryId && catMap[tx.categoryId]) {
+        resolvedCategory = catMap[tx.categoryId];
+      } else if (tx.categoryId && catMap[tx.categoryId]) {
+        resolvedCategory = catMap[tx.categoryId];
+      }
+      return {
+        ...tx,
+        category: resolvedCategory || 'Uncategorised'
+      };
+    });
+
     res.status(200).json({
       success: true,
-      count: transactions.length,
-      data: transactions
+      count: formattedTransactions.length,
+      data: formattedTransactions
     });
   } catch (error) {
     next(error);

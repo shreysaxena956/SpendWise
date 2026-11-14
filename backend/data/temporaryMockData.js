@@ -12,22 +12,41 @@
  * ============================================================================
  */
 
-// Initial categories list (Coordinated with Member 3)
+/**
+ * ============================================================================
+ * TEMPORARY MOCK DATASET (FOR DEVELOPMENT & FRONTEND TESTING ONLY)
+ * ============================================================================
+ * Models the shared SpendWise database schema:
+ * - Category: id, name, type
+ * - Transaction: id, title, amount, type, date, notes, categoryId (FK), category
+ *
+ * Includes the default categories requested for Member 3:
+ * Expense: Food, Travel, Shopping, Education, Entertainment, Healthcare, Bills, Others
+ * Income:  Salary, Freelance, Business, Other Income
+ * Default: Uncategorised
+ * ============================================================================
+ */
+
+// Initial categories list (Member 3 Responsibility)
 let categories = [
-  { id: 1, name: "Salary", type: "Income" },
-  { id: 2, name: "Freelance", type: "Income" },
-  { id: 3, name: "Investment", type: "Income" },
-  { id: 4, name: "Gift", type: "Income" },
+  // Default fallback category (ID: 1)
+  { id: 1, name: "Uncategorised", type: "Expense" },
+
+  // Income categories (IDs: 2 - 5)
+  { id: 2, name: "Salary", type: "Income" },
+  { id: 3, name: "Freelance", type: "Income" },
+  { id: 4, name: "Business", type: "Income" },
   { id: 5, name: "Other Income", type: "Income" },
-  { id: 6, name: "Food & Dining", type: "Expense" },
-  { id: 7, name: "Rent & Housing", type: "Expense" },
-  { id: 8, name: "Groceries", type: "Expense" },
-  { id: 9, name: "Utilities", type: "Expense" },
-  { id: 10, name: "Transportation", type: "Expense" },
-  { id: 11, name: "Entertainment", type: "Expense" },
-  { id: 12, name: "Health & Fitness", type: "Expense" },
-  { id: 13, name: "Shopping", type: "Expense" },
-  { id: 14, name: "Miscellaneous", type: "Expense" }
+
+  // Expense categories (IDs: 6 - 13)
+  { id: 6, name: "Food", type: "Expense" },
+  { id: 7, name: "Travel", type: "Expense" },
+  { id: 8, name: "Shopping", type: "Expense" },
+  { id: 9, name: "Education", type: "Expense" },
+  { id: 10, name: "Entertainment", type: "Expense" },
+  { id: 11, name: "Healthcare", type: "Expense" },
+  { id: 12, name: "Bills", type: "Expense" },
+  { id: 13, name: "Others", type: "Expense" }
 ];
 
 // Helper to get current year and month formatted (YYYY-MM-DD)
@@ -35,58 +54,57 @@ const now = new Date();
 const currentYear = now.getFullYear();
 const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
 
-// Initial sample transactions (Member 1 Responsibility)
-// Contains categoryId referencing Category primary key and category name for compatibility
+// Initial sample transactions
 let transactions = [
   {
     id: 1,
     title: "Monthly Salary",
     amount: 50000.0,
     type: "Income",
-    categoryId: 1,
+    categoryId: 2,
     category: "Salary",
     date: `${currentYear}-${currentMonth}-01`,
     notes: "Main full-time job salary for the month"
   },
   {
     id: 2,
-    title: "Apartment Rent",
+    title: "Apartment Rent & Maintenance",
     amount: 15000.0,
     type: "Expense",
-    categoryId: 7,
-    category: "Rent & Housing",
+    categoryId: 12,
+    category: "Bills",
     date: `${currentYear}-${currentMonth}-02`,
-    notes: "Paid via bank transfer"
+    notes: "Paid monthly rent via bank transfer"
   },
   {
     id: 3,
     title: "Weekly Grocery Run",
     amount: 3200.0,
     type: "Expense",
-    categoryId: 8,
-    category: "Groceries",
+    categoryId: 6,
+    category: "Food",
     date: `${currentYear}-${currentMonth}-05`,
-    notes: "Vegetables, fruits, and essentials"
+    notes: "Vegetables, milk, fruits, and groceries"
   },
   {
     id: 4,
     title: "Website Freelance Gig",
     amount: 12000.0,
     type: "Income",
-    categoryId: 2,
+    categoryId: 3,
     category: "Freelance",
     date: `${currentYear}-${currentMonth}-10`,
-    notes: "Frontend bug fixing project"
+    notes: "Frontend bug fixing and redesign project"
   },
   {
     id: 5,
     title: "Electricity & Internet Bill",
     amount: 2400.0,
     type: "Expense",
-    categoryId: 9,
-    category: "Utilities",
+    categoryId: 12,
+    category: "Bills",
     date: `${currentYear}-${currentMonth}-12`,
-    notes: "Broadband and power"
+    notes: "Broadband fiber and electricity"
   },
   {
     id: 6,
@@ -94,7 +112,7 @@ let transactions = [
     amount: 1850.0,
     type: "Expense",
     categoryId: 6,
-    category: "Food & Dining",
+    category: "Food",
     date: `${currentYear}-${currentMonth}-14`,
     notes: "Weekend dinner at bistro"
   },
@@ -103,17 +121,17 @@ let transactions = [
     title: "Metro & Cab Commute",
     amount: 1200.0,
     type: "Expense",
-    categoryId: 10,
-    category: "Transportation",
+    categoryId: 7,
+    category: "Travel",
     date: `${currentYear}-${currentMonth}-18`,
-    notes: "Monthly travel pass recharge"
+    notes: "Monthly transit pass recharge"
   },
   {
     id: 8,
     title: "Movie Tickets & Snacks",
     amount: 900.0,
     type: "Expense",
-    categoryId: 11,
+    categoryId: 10,
     category: "Entertainment",
     date: `${currentYear}-${currentMonth}-20`,
     notes: "Weekend movie outing"
@@ -121,7 +139,7 @@ let transactions = [
 ];
 
 // Helper auto-increment counter for IDs
-let nextCategoryId = 15;
+let nextCategoryId = 14;
 let nextTransactionId = 9;
 
 module.exports = {

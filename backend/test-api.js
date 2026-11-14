@@ -86,6 +86,41 @@ const server = app.listen(0, async () => {
     const deleteCatRes = await request('DELETE', `/api/categories/${createdCatId}`);
     assert(deleteCatRes.status === 200, 'DELETE /api/categories/:id removes category');
 
+    // 2b. Test Uncategorised Protection & Orphan Reassignment
+    const uncategorisedItem = catListRes.body.data.find(c => c.name.toLowerCase() === 'uncategorised');
+    if (uncategorisedItem) {
+      const deleteUncatRes = await request('DELETE', `/api/categories/${uncategorisedItem.id}`);
+      assert(deleteUncatRes.status === 400, 'DELETE /api/categories/:id rejects deleting default Uncategorised category');
+    }
+
+    // Create temporary category with transaction to test orphan re-assignment
+    const tempCat = await request('POST', '/api/categories', { name: 'Temporary Hobbies', type: 'Expense' });
+    const tempCatId = tempCat.body.data.id;
+    const tempTx = await request('POST', '/api/transactions', {
+      title: 'Hobby RC Car',
+      amount: 450,
+      type: 'Expense',
+      categoryId: tempCatId,
+      date: '2026-11-05'
+    });
+    const tempTxId = tempTx.body.data.id;
+
+    // Delete Temporary Hobbies category -> should move Hobby RC Car to Uncategorised
+    const deleteTempCatRes = await request('DELETE', `/api/categories/${tempCatId}`);
+    assert(
+      deleteTempCatRes.status === 200 && deleteTempCatRes.body.reassignedCount >= 1,
+      'DELETE /api/categories/:id reassigns linked transaction to Uncategorised'
+    );
+
+    const checkTxRes = await request('GET', `/api/transactions/${tempTxId}`);
+    assert(
+      checkTxRes.status === 200 && checkTxRes.body.data.category.toLowerCase() === 'uncategorised',
+      'Orphaned transaction successfully moved to Uncategorised category'
+    );
+
+    // Clean up temporary transaction
+    await request('DELETE', `/api/transactions/${tempTxId}`);
+
     // 3. Transactions - Create Valid Income & Expense
     const newIncome = await request('POST', '/api/transactions', {
       title: 'Stipend Bonus',
@@ -175,6 +210,15 @@ const server = app.listen(0, async () => {
 
     const filterType = await request('GET', '/api/transactions?type=Income');
     assert(filterType.status === 200 && filterType.body.data.every(t => t.type === 'Income'), 'GET /api/transactions?type=Income filters correctly');
+
+    const filterCategory = await request('GET', '/api/transactions?categoryId=2');
+    assert(filterCategory.status === 200 && filterCategory.body.data.every(t => Number(t.categoryId) === 2), 'GET /api/transactions?categoryId=2 filters correctly');
+
+    const filterSearch = await request('GET', '/api/transactions?search=Stipend');
+    assert(filterSearch.status === 200 && filterSearch.body.data.length > 0, 'GET /api/transactions?search=Stipend finds by title');
+
+    const filterMonthYear = await request('GET', '/api/transactions?month=11&year=2026');
+    assert(filterMonthYear.status === 200 && Array.isArray(filterMonthYear.body.data), 'GET /api/transactions?month=11&year=2026 filters by month/year');
 
     const singleTx = await request('GET', `/api/transactions/${createdTxId}`);
     assert(singleTx.status === 200 && singleTx.body.data.id === createdTxId, 'GET /api/transactions/:id retrieves single item');

@@ -24,17 +24,21 @@ The **Transaction Management Module** is the core operational interface of Spend
 ```text
 frontend/src/
 ├── components/
-│   ├── AddExpenseModal.jsx          # Dedicated form for creating expenses
-│   ├── AddIncomeModal.jsx           # Dedicated form for creating income records
+│   ├── CategoryManager.jsx          # Category CRUD & orphan management interface (Member 3)
+│   ├── TransactionHistory.jsx       # Transaction history with title search & multi-filters (Member 3)
+│   ├── AddExpenseModal.jsx          # Dedicated form for creating expenses (Member 1)
+│   ├── AddIncomeModal.jsx           # Dedicated form for creating income records (Member 1)
 │   ├── NotificationToast.jsx        # User feedback alert toast for CRUD actions
-│   ├── TransactionDeleteModal.jsx   # Deletion confirmation dialog
-│   ├── TransactionEditModal.jsx     # Form for editing existing transactions
-│   ├── TransactionFilters.jsx       # Search and filter toolbar
-│   ├── TransactionList.jsx          # Data table rendering transactions & actions
-│   └── TransactionSummaryCards.jsx  # KPI cards: Balance, Income, Expense, Count
+│   ├── TransactionDeleteModal.jsx   # Deletion confirmation dialog (Member 1)
+│   ├── TransactionEditModal.jsx     # Form for editing existing transactions (Member 1)
+│   ├── TransactionSummaryCards.jsx  # KPI cards: Balance, Income, Expense, Count (Member 1)
+│   ├── DashboardView.jsx            # Main Dashboard & Analytics view (Member 2)
+│   ├── DashboardSummaryCards.jsx    # 6 Financial KPI summary cards (Member 2)
+│   ├── CategorySpendingChart.jsx    # Interactive SVG Donut chart & breakdown (Member 2)
+│   └── MonthlyOverviewChart.jsx     # Interactive SVG 12-Month bar chart (Member 2)
 ├── services/
 │   └── api.js                       # Centralized fetch API service (REST backend)
-├── App.jsx                          # Main coordinator state & handlers
+├── App.jsx                          # Main coordinator state & 3-tab navigation
 ├── index.css                        # Desktop-first design system and styling
 └── main.jsx                         # React 18 root entry point
 ```

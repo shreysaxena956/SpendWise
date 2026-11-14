@@ -200,6 +200,27 @@ function createMockPrismaClient() {
         return deleted;
       },
 
+      async updateMany(args = {}) {
+        let count = 0;
+        if (args.where) {
+          const { categoryId, category } = args.where;
+          for (let i = 0; i < mockData.transactions.length; i++) {
+            const tx = mockData.transactions[i];
+            let match = false;
+            if (categoryId !== undefined && Number(tx.categoryId) === Number(categoryId)) match = true;
+            if (category !== undefined && tx.category && tx.category.toLowerCase() === category.toLowerCase()) match = true;
+            if (match) {
+              mockData.transactions[i] = {
+                ...tx,
+                ...args.data
+              };
+              count++;
+            }
+          }
+        }
+        return { count };
+      },
+
       async count(args = {}) {
         const list = await this.findMany(args);
         return list.length;

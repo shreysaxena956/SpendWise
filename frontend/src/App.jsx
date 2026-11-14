@@ -18,6 +18,7 @@ import TransactionDeleteModal from './components/TransactionDeleteModal';
 import TransactionSummaryCards from './components/TransactionSummaryCards';
 import TransactionHistory from './components/TransactionHistory';
 import CategoryManager from './components/CategoryManager';
+import Dashboard3DView from './components/3d/Dashboard3DView';
 import NotificationToast from './components/NotificationToast';
 
 /**
@@ -189,6 +190,22 @@ export default function App() {
     }
   };
 
+  // If 3D mode is active, render the immersive 3D Studio environment
+  if (activeTab === '3d-dashboard') {
+    return (
+      <>
+        <Dashboard3DView
+          onBackToDashboard={() => setActiveTab('dashboard')}
+          showNotification={showNotification}
+        />
+        <NotificationToast
+          notification={notification}
+          onClose={() => setNotification(null)}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* App Header */}
@@ -251,6 +268,28 @@ export default function App() {
             <span>Category Management</span>
             <span className="nav-tab-count">{categories.length}</span>
           </button>
+
+          <button
+            type="button"
+            className={`nav-tab nav-tab-3d ${activeTab === '3d-dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('3d-dashboard')}
+          >
+            <span className="nav-tab-icon">🌐</span>
+            <span>3D Financial Space</span>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 800,
+                padding: '1px 5px',
+                borderRadius: '4px',
+                background: '#38bdf8',
+                color: '#030712',
+                marginLeft: '6px'
+              }}
+            >
+              3D
+            </span>
+          </button>
         </div>
       </nav>
 
@@ -260,6 +299,7 @@ export default function App() {
           onAddIncome={() => setIsIncomeModalOpen(true)}
           onAddExpense={() => setIsExpenseModalOpen(true)}
           onViewAllTransactions={() => setActiveTab('transactions')}
+          onOpen3D={() => setActiveTab('3d-dashboard')}
           refreshTrigger={refreshTrigger}
           showNotification={showNotification}
         />

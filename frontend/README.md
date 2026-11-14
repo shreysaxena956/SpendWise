@@ -24,6 +24,15 @@ The **Transaction Management Module** is the core operational interface of Spend
 ```text
 frontend/src/
 ├── components/
+│   ├── 3d/                          # Interactive 3D Financial Dashboard Studio (Three.js & R3F)
+│   │   ├── Dashboard3DView.jsx      # Main 3D Canvas container & state coordinator
+│   │   ├── Scene3D.jsx              # 3D Environment, lighting, particles, and OrbitControls
+│   │   ├── FinancialSummary3D.jsx   # 3 floating glass-style cards (Income, Expense, Balance)
+│   │   ├── MonthlyOverview3D.jsx    # Interactive 3D dual bar chart (Monthly Income vs Expense)
+│   │   ├── CategorySpending3D.jsx   # 3D Category pillars with glowing caps & percentages
+│   │   ├── SpendingTrends3D.jsx     # 3D Monthly spending trajectory & delta trajectory
+│   │   ├── HUDOverlay.jsx           # Glassmorphism top bar, inspector drawer & hints
+│   │   └── dashboard3d.css          # Futuristic cyber-finance dark theme styling
 │   ├── CategoryManager.jsx          # Category CRUD & orphan management interface (Member 3)
 │   ├── TransactionHistory.jsx       # Transaction history with title search & multi-filters (Member 3)
 │   ├── AddExpenseModal.jsx          # Dedicated form for creating expenses (Member 1)
@@ -38,10 +47,36 @@ frontend/src/
 │   └── MonthlyOverviewChart.jsx     # Interactive SVG 12-Month bar chart (Member 2)
 ├── services/
 │   └── api.js                       # Centralized fetch API service (REST backend)
-├── App.jsx                          # Main coordinator state & 3-tab navigation
+├── App.jsx                          # Main coordinator state & 4-tab navigation
 ├── index.css                        # Desktop-first design system and styling
 └── main.jsx                         # React 18 root entry point
 ```
+
+---
+
+## 2.1 Interactive 3D Financial Dashboard (New Feature)
+
+The application features a desktop-first **Interactive 3D Financial Dashboard** built using **Three.js**, **@react-three/fiber**, and **@react-three/drei**:
+
+1. **Futuristic Dark-Themed Atmosphere:**
+   - Radial dark navy/space gradient with cybernetic grid floor.
+   - Dual ambient particle sparkles (`#38bdf8` and `#c084fc`) providing soft depth.
+   - Multi-directional accent lighting (cyan, magenta, and deep navy fill).
+
+2. **3D Financial Panels:**
+   - **Financial Summary Cards (Section A):** Three floating glassmorphism slabs showing Total Income, Total Expenses, and Current Balance with live backend data and gentle zero-gravity hovering.
+   - **Monthly Financial Overview (Section B):** An interactive 3D dual-bar chart comparing Income (green) vs Expenses (coral) across months with dynamic height scaling.
+   - **Category-wise Spending (Section C):** 3D cylindrical/hexagonal pillars arranged in a curve representing spending categories (Food, Rent, Travel, Utilities, Shopping, etc.) with icons and percentage badges.
+   - **Spending Trends (Section D):** A 3D spending trajectory curve with glowing month-over-month nodes displaying expenditure change percentages (`+X%` or `-Y%`).
+
+3. **Desktop Mouse Controls:**
+   - **Left Click + Drag:** 360° orbital camera rotation.
+   - **Scroll Wheel:** Smooth camera zoom in/out.
+   - **Right Click + Drag:** Camera panning.
+   - **Hover / Click:** Highlights 3D objects and opens the interactive HUD Inspector Drawer.
+   - **Camera Presets:** Instant camera navigation buttons: `[🌌 Overview]`, `[💵 Summary]`, `[📊 Monthly]`, `[🏷️ Categories]`, and `[📈 Trends]`.
+   - **Reset View:** One-click button to reset the camera to the default viewpoint.
+   - **Exit 3D:** Seamless one-click return to the standard 2D dashboard.
 
 ---
 

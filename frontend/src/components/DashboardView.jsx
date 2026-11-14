@@ -45,6 +45,7 @@ export default function DashboardView({
   onAddIncome,
   onAddExpense,
   onViewAllTransactions,
+  onOpen3D,
   refreshTrigger = 0,
   showNotification
 }) {
@@ -156,8 +157,89 @@ export default function DashboardView({
           >
             {isLoading ? '⏳ Loading...' : '🔄 Refresh'}
           </button>
+
+          {/* Explore 3D Dashboard Button */}
+          {onOpen3D && (
+            <button
+              type="button"
+              className="btn btn-explore-3d btn-sm"
+              onClick={onOpen3D}
+              title="Experience your finances in futuristic interactive 3D"
+            >
+              <span>🌐</span>
+              <span>Explore 3D Dashboard</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* 3D Dashboard Callout Card Banner */}
+      {onOpen3D && (
+        <div
+          style={{
+            margin: '0 0 20px 0',
+            padding: '14px 20px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(49, 46, 129, 0.9))',
+            border: '1px solid rgba(99, 102, 241, 0.4)',
+            boxShadow: '0 4px 18px rgba(79, 70, 229, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #4f46e5, #8b5cf6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '22px',
+                boxShadow: '0 0 15px rgba(139, 92, 246, 0.5)'
+              }}
+            >
+              🌐
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+                  Interactive 3D Financial Space
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: '#38bdf8',
+                    color: '#030712'
+                  }}
+                >
+                  NEW FEATURE
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#c7d2fe', marginTop: '2px' }}>
+                Explore your financial cards, 3D monthly bars, category pillars, and spending trends with Three.js orbit controls.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-explore-3d"
+            onClick={onOpen3D}
+            style={{ padding: '8px 18px', fontSize: '13px' }}
+          >
+            <span>Launch 3D View →</span>
+          </button>
+        </div>
+      )}
 
       {/* 1 to 6: Core Summary Cards (Lifetime Totals + Monthly Totals) */}
       <DashboardSummaryCards

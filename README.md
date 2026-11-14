@@ -23,6 +23,15 @@ SpendWise/
 ├── frontend/               # React 18 + Vite frontend
 │   ├── src/
 │   │   ├── components/
+│   │   │   ├── 3d/                       # Interactive 3D Financial Dashboard Studio (Three.js & R3F)
+│   │   │   │   ├── Dashboard3DView.jsx   # 3D canvas container, HUD coordinator, and state
+│   │   │   │   ├── Scene3D.jsx           # 3D environment, lighting, sparkles, and OrbitControls
+│   │   │   │   ├── FinancialSummary3D.jsx # Floating glass cards (Income, Expense, Balance)
+│   │   │   │   ├── MonthlyOverview3D.jsx # 3D dual bar chart (Monthly Income vs Expense)
+│   │   │   │   ├── CategorySpending3D.jsx # 3D Category pillars with glowing caps & percentages
+│   │   │   │   ├── SpendingTrends3D.jsx  # 3D Monthly spending trajectory & delta trajectory
+│   │   │   │   ├── HUDOverlay.jsx        # Glassmorphism top bar, inspector drawer & hints
+│   │   │   │   └── dashboard3d.css       # Futuristic cyber-finance dark theme styling
 │   │   │   ├── CategoryManager.jsx       # Category CRUD & orphan reassignment (Member 3)
 │   │   │   ├── TransactionHistory.jsx    # Complete Transaction History & multi-filters (Member 3)
 │   │   │   ├── DashboardView.jsx         # Main Dashboard & Analytics view (Member 2)

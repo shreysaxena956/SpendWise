@@ -120,32 +120,33 @@ In today's digital economy, tracking personal income, budgeting across living ex
 
 ## 📸 Screenshots
 
-> *Screenshots from the application running on desktop browsers (1080p / 1440p).*
+> *Genuine application screenshots captured from the running SpendWise application.*
 
 | View | Screenshot Preview | Description |
 | :--- | :---: | :--- |
-| **Main 2D Dashboard** | ![Dashboard View Placeholder](docs/assets/dashboard-placeholder.png) | *Summary cards, category-wise spending donut chart, monthly overview bars, and recent activity.* |
-| **Interactive 3D Space** | ![3D Studio Placeholder](docs/assets/3d-studio-placeholder.png) | *Three.js 3D canvas featuring floating glass cards, category pillars, and HUD controls.* |
-| **Transaction History** | ![Transaction History Placeholder](docs/assets/history-placeholder.png) | *Comprehensive historical ledger with KPI summary strip, multi-filters, and search.* |
-| **Category Manager** | ![Category Manager Placeholder](docs/assets/categories-placeholder.png) | *Category CRUD grid, type filtering, usage indicators, and orphan migration safeguards.* |
-| **Add / Edit Modals** | ![Modal Dialogs Placeholder](docs/assets/modals-placeholder.png) | *Clean modal interfaces for adding income, adding expenses, editing, and delete confirmations.* |
+| **Main 2D Dashboard** | ![Main 2D Dashboard](docs/assets/dashboard.png) | *Summary KPI cards, category-wise spending donut chart, monthly overview bars, and recent activity.* |
+| **Interactive 3D Financial Space** | ![Interactive 3D Financial Space](docs/assets/3d-studio.png) | *Three.js 3D canvas featuring floating glass cards, category pillars, and interactive HUD controls.* |
+| **Transaction History** | ![Transaction History](docs/assets/transaction-history.png) | *Comprehensive historical audit ledger with filtered KPI summary strip, multi-parameter filters, and search.* |
+| **Category Manager** | ![Category Manager](docs/assets/category-manager.png) | *Category management grid with type filtering, edit/delete controls, and orphan migration safeguards.* |
+| **Add / Edit Transaction Modals** | ![Add/Edit Transaction Modals](docs/assets/transaction-modals.png) | *Clean modal interfaces for recording income and expenses with validation and category selectors.* |
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Version | Purpose |
-| :--- | :--- | :---: | :--- |
-| **Frontend Framework** | React | `^18.3.1` | Component-based reactive UI architecture |
-| **Frontend Build Tool** | Vite | `^5.2.11` | Lightning-fast dev server and Rollup/Vite production bundler |
-| **3D Rendering** | Three.js | `^0.187.0` | WebGL 3D graphics rendering engine |
-| **3D React Wrapper** | `@react-three/fiber` | `^8.18.0` | Declarative Three.js scene coordinator for React |
-| **3D Helpers** | `@react-three/drei` | `^9.122.0` | OrbitControls, HTML projections, and lighting helpers |
-| **Backend Runtime** | Node.js | `>= 18.x` | Asynchronous JavaScript runtime environment |
-| **Backend Framework** | Express.js | `^4.19.2` | RESTful API routing, middleware, and request handling |
-| **ORM / Data Client** | Prisma | `^5.14.0` | Type-safe query building, migrations, and schema modeling |
-| **Database Engine** | PostgreSQL | `>= 14.x` | Relational ACID-compliant database storage |
-| **Dev & Utilities** | CORS, Dotenv, Nodemon | Latest | Cross-origin resource sharing, environment config, auto-restart |
+The project focuses on core web and software engineering technologies aligned with our college curriculum:
+
+| Technology | Role & Purpose |
+| :--- | :--- |
+| **HTML** | Semantic markup structure for web page layout and desktop browser presentation |
+| **CSS** | Custom styling, dark mode design system, responsive grids, and modal dialogs |
+| **JavaScript** | Core programming language powering both client-side React and server-side Node.js |
+| **React.js** | Declarative component-based frontend user interface library |
+| **Node.js** | Asynchronous event-driven JavaScript runtime environment for the backend server |
+| **Express.js** | Minimalist backend web framework handling REST API endpoints, routing, and middleware |
+| **PostgreSQL** | Relational database management system providing structured ACID-compliant storage |
+| **Prisma ORM** | Object-Relational Mapping toolkit for schema definition, migrations, and database queries |
+| **Three.js** | WebGL 3D graphics library powering the interactive 3D Financial Space dashboard |
 
 ---
 

@@ -73,6 +73,9 @@ const server = app.listen(0, async () => {
     const catListRes = await request('GET', '/api/categories');
     assert(catListRes.status === 200 && Array.isArray(catListRes.body.data), 'GET /api/categories returns array');
 
+    const catExpenseRes = await request('GET', '/api/categories?type=Expense');
+    assert(catExpenseRes.status === 200 && catExpenseRes.body.data.every(c => c.type === 'Expense'), 'GET /api/categories?type=Expense filters by Expense');
+
     const addCatRes = await request('POST', '/api/categories', { name: 'Freelance Tech', type: 'Income' });
     assert(addCatRes.status === 201 && addCatRes.body.data.name === 'Freelance Tech', 'POST /api/categories creates new category');
     const createdCatId = addCatRes.body.data.id;
@@ -80,11 +83,15 @@ const server = app.listen(0, async () => {
     const duplicateCatRes = await request('POST', '/api/categories', { name: 'Freelance Tech', type: 'Income' });
     assert(duplicateCatRes.status === 400, 'POST /api/categories duplicate name returns 400');
 
+    // Attempting to delete default Uncategorised category (ID 1) must fail
+    const deleteLinkedCatRes = await request('DELETE', '/api/categories/1');
+    assert(deleteLinkedCatRes.status === 400, 'DELETE /api/categories/:id returns 400 when attempting to delete default category');
+
     const updateCatRes = await request('PUT', `/api/categories/${createdCatId}`, { name: 'Freelance Consulting' });
     assert(updateCatRes.status === 200 && updateCatRes.body.data.name === 'Freelance Consulting', 'PUT /api/categories/:id updates category');
 
     const deleteCatRes = await request('DELETE', `/api/categories/${createdCatId}`);
-    assert(deleteCatRes.status === 200, 'DELETE /api/categories/:id removes category');
+    assert(deleteCatRes.status === 200, 'DELETE /api/categories/:id removes unlinked category');
 
     // 2b. Test Uncategorised Protection & Orphan Reassignment
     const uncategorisedItem = catListRes.body.data.find(c => c.name.toLowerCase() === 'uncategorised');
@@ -194,11 +201,11 @@ const server = app.listen(0, async () => {
       title: 'Freelance Design Payment',
       amount: 8000,
       type: 'Income',
-      categoryId: 2, // Freelance category ID
+      categoryId: 3, // Freelance category ID
       date: '2026-11-04',
       notes: 'Mobile app UI design'
     });
-    assert(txWithCatId.status === 201 && txWithCatId.body.data.categoryId === 2, 'POST /api/transactions with categoryId FK works properly');
+    assert(txWithCatId.status === 201 && txWithCatId.body.data.categoryId === 3, 'POST /api/transactions with categoryId FK works properly');
     const catIdTxId = txWithCatId.body.data.id;
 
     // Clean up created test transaction
@@ -217,8 +224,14 @@ const server = app.listen(0, async () => {
     const filterSearch = await request('GET', '/api/transactions?search=Stipend');
     assert(filterSearch.status === 200 && filterSearch.body.data.length > 0, 'GET /api/transactions?search=Stipend finds by title');
 
-    const filterMonthYear = await request('GET', '/api/transactions?month=11&year=2026');
-    assert(filterMonthYear.status === 200 && Array.isArray(filterMonthYear.body.data), 'GET /api/transactions?month=11&year=2026 filters by month/year');
+    const filterSearchSalary = await request('GET', '/api/transactions?search=salary');
+    assert(filterSearchSalary.status === 200 && filterSearchSalary.body.data.some(t => t.title.toLowerCase().includes('salary')), 'GET /api/transactions?search=salary filters by title keyword');
+
+    const currentY = new Date().getFullYear();
+    const currentM = new Date().getMonth() + 1;
+    const currentMStr = String(currentM).padStart(2, '0');
+    const filterMonthYear = await request('GET', `/api/transactions?month=${currentM}&year=${currentY}`);
+    assert(filterMonthYear.status === 200 && Array.isArray(filterMonthYear.body.data) && filterMonthYear.body.data.every(t => t.date.startsWith(`${currentY}-${currentMStr}`)), 'GET /api/transactions?month=&year= filters by month and year');
 
     const singleTx = await request('GET', `/api/transactions/${createdTxId}`);
     assert(singleTx.status === 200 && singleTx.body.data.id === createdTxId, 'GET /api/transactions/:id retrieves single item');
@@ -251,7 +264,7 @@ const server = app.listen(0, async () => {
     );
 
     // 9. Monthly Report API
-    const monthlyRes = await request('GET', '/api/reports/monthly?month=11&year=2026');
+    const monthlyRes = await request('GET', `/api/reports/monthly?month=${currentM}&year=${currentY}`);
     assert(
       monthlyRes.status === 200 &&
       typeof monthlyRes.body.data.monthlyIncome === 'number' &&
@@ -289,4 +302,3 @@ const server = app.listen(0, async () => {
     process.exit(1);
   }
 });
-

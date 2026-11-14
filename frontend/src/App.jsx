@@ -11,13 +11,12 @@ import {
 } from './services/api';
 
 import DashboardView from './components/DashboardView';
+import TransactionHistoryView from './components/TransactionHistoryView';
+import CategoryManager from './components/CategoryManager';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddExpenseModal from './components/AddExpenseModal';
 import TransactionEditModal from './components/TransactionEditModal';
 import TransactionDeleteModal from './components/TransactionDeleteModal';
-import TransactionSummaryCards from './components/TransactionSummaryCards';
-import TransactionHistory from './components/TransactionHistory';
-import CategoryManager from './components/CategoryManager';
 import Dashboard3DView from './components/3d/Dashboard3DView';
 import NotificationToast from './components/NotificationToast';
 
@@ -25,17 +24,17 @@ import NotificationToast from './components/NotificationToast';
  * ============================================================================
  * SpendWise – Main Application Component
  * ============================================================================
- * Coordinates the entire SpendWise personal finance application:
- * 1. Dashboard & Analytics Module (Member 2 Responsibility)
- * 2. Transaction Management Module (Member 1 Responsibility)
- * 3. Categories & Transaction History Module (Member 3 Responsibility)
+ * Coordinates the complete personal finance application across all 3 modules:
+ * 1. Transaction Management Module (Member 1)
+ * 2. Dashboard & Analytics Module (Member 2)
+ * 3. Categories & Transaction History Module (Member 3)
  * ============================================================================
  */
 export default function App() {
-  // Navigation active tab: 'dashboard' | 'transactions' | 'categories'
+  // Navigation active tab: 'dashboard' | 'history' | 'categories' | '3d-dashboard'
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Trigger to signal dashboard metrics refresh when data changes
+  // Trigger to signal metrics refresh when transactions or categories change
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Main data state
@@ -75,6 +74,7 @@ export default function App() {
       ]);
       setTransactions(txList);
       setCategories(catList);
+      setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
       console.error('Error loading initial data:', err);
       showNotification(
@@ -237,9 +237,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* Navigation View Tabs */}
+      {/* Navigation View Tabs for All 3 Modules */}
       <nav className="nav-tabs-container">
         <div className="nav-tabs">
+          {/* Tab 1: Dashboard & Analytics (Member 2) */}
           <button
             type="button"
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -249,26 +250,29 @@ export default function App() {
             <span>Dashboard & Analytics</span>
           </button>
 
+          {/* Tab 2: Transaction History & Ledger (Member 3 / Member 1) */}
           <button
             type="button"
-            className={`nav-tab ${activeTab === 'transactions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transactions')}
+            className={`nav-tab ${activeTab === 'history' || activeTab === 'transactions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
           >
             <span className="nav-tab-icon">📜</span>
             <span>Transaction History</span>
             <span className="nav-tab-count">{transactions.length}</span>
           </button>
 
+          {/* Tab 3: Category Management (Member 3) */}
           <button
             type="button"
             className={`nav-tab ${activeTab === 'categories' ? 'active' : ''}`}
             onClick={() => setActiveTab('categories')}
           >
             <span className="nav-tab-icon">🏷️</span>
-            <span>Category Management</span>
+            <span>Categories</span>
             <span className="nav-tab-count">{categories.length}</span>
           </button>
 
+          {/* Tab 4: 3D Studio Space (Member 2 Feature) */}
           <button
             type="button"
             className={`nav-tab nav-tab-3d ${activeTab === '3d-dashboard' ? 'active' : ''}`}
@@ -293,42 +297,41 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
+      {/* Main Content Area: Switch between Views */}
       {activeTab === 'dashboard' && (
         <DashboardView
           onAddIncome={() => setIsIncomeModalOpen(true)}
           onAddExpense={() => setIsExpenseModalOpen(true)}
-          onViewAllTransactions={() => setActiveTab('transactions')}
+          onViewAllTransactions={() => setActiveTab('history')}
           onOpen3D={() => setActiveTab('3d-dashboard')}
           refreshTrigger={refreshTrigger}
           showNotification={showNotification}
         />
       )}
 
-      {activeTab === 'transactions' && (
-        <>
-          {/* Financial Summary KPI Cards (Member 1) */}
-          <TransactionSummaryCards transactions={transactions} />
-
-          {/* New Transaction History Component (Member 3 - Replaces Old Component) */}
-          <TransactionHistory
-            transactions={transactions}
-            categories={categories}
-            isLoading={isLoading}
-            onEdit={(tx) => setEditingTransaction(tx)}
-            onDelete={(tx) => setDeletingTransaction(tx)}
-            onRefresh={loadInitialData}
-          />
-        </>
+      {(activeTab === 'history' || activeTab === 'transactions') && (
+        <TransactionHistoryView
+          transactions={transactions}
+          categories={categories}
+          isLoading={isLoading}
+          onEdit={(tx) => setEditingTransaction(tx)}
+          onDelete={(tx) => setDeletingTransaction(tx)}
+          onRefresh={loadInitialData}
+          onAddIncome={() => setIsIncomeModalOpen(true)}
+          onAddExpense={() => setIsExpenseModalOpen(true)}
+        />
       )}
 
       {activeTab === 'categories' && (
         <CategoryManager
           categories={categories}
+          transactions={transactions}
           onAddCategory={handleAddCategory}
           onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
+          onCategoriesChanged={loadInitialData}
           isLoading={isLoading}
+          showNotification={showNotification}
         />
       )}
 

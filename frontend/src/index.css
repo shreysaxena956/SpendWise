@@ -1236,3 +1236,226 @@ body {
 .recent-activity-card {
   margin-top: 10px;
 }
+
+/* ==========================================================================
+   SpendWise – Categories & Transaction History Module Styles (Member 3)
+   ========================================================================== */
+
+/* Category Manager Container & Statistics */
+.category-manager-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.category-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.category-stat-pill {
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--card-shadow);
+}
+
+.category-stat-pill.expense {
+  border-left: 4px solid var(--danger);
+}
+
+.category-stat-pill.income {
+  border-left: 4px solid var(--success);
+}
+
+.stat-pill-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.stat-pill-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+/* Category Cards Grid */
+.category-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.category-card-item {
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.category-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: var(--gray-300);
+}
+
+.cat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cat-card-name-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-type-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cat-type-indicator.income {
+  background-color: var(--success);
+}
+
+.cat-type-indicator.expense {
+  background-color: var(--danger);
+}
+
+.cat-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.cat-card-body {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.cat-usage-count {
+  display: inline-block;
+  background-color: var(--gray-50);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--gray-200);
+}
+
+.cat-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+
+/* Modal Error Banner */
+.form-error-banner {
+  background-color: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+/* Delete Warning Modal (Referential Integrity Blocked) */
+.delete-warning-blocked {
+  text-align: center;
+  padding: 10px;
+}
+
+.warning-icon {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.delete-warning-blocked h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+
+.delete-warning-blocked p {
+  font-size: 13px;
+  color: var(--gray-700);
+  margin-bottom: 10px;
+}
+
+.warning-hint {
+  font-size: 12px;
+  color: var(--gray-500) !important;
+  background-color: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+
+/* Transaction History View & Filters Toolbar */
+.history-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.history-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.history-kpi-card {
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--card-shadow);
+}
+
+.history-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.history-kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.history-filters-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}

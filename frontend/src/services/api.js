@@ -155,7 +155,7 @@ export async function deleteTransaction(id) {
 }
 
 /**
- * 6. Fetch categories list (Coordinated with Member 3)
+ * 6. Fetch categories list (Member 3 Responsibility)
  * @param {string} type - 'Income' or 'Expense' (optional)
  */
 export async function getCategories(type = '') {
@@ -188,7 +188,6 @@ export async function createCategory(categoryData) {
       },
       body: JSON.stringify(categoryData)
     });
-
     const result = await response.json();
 
     if (!response.ok) {
@@ -216,7 +215,6 @@ export async function updateCategory(id, updatedData) {
       },
       body: JSON.stringify(updatedData)
     });
-
     const result = await response.json();
 
     if (!response.ok) {
@@ -239,14 +237,18 @@ export async function deleteCategory(id) {
     const response = await fetch(`${API_BASE}/categories/${id}`, {
       method: 'DELETE'
     });
-
     const result = await response.json();
 
     if (!response.ok) {
       throw new Error(result.error || 'Failed to delete category');
     }
 
-    return result;
+    // Return both the deleted category record and the operation message / reassigned count
+    return {
+      ...(result.data || {}),
+      message: result.message,
+      reassignedCount: result.reassignedCount
+    };
   } catch (error) {
     console.error(`API Error in deleteCategory(${id}):`, error.message);
     throw error;
@@ -335,4 +337,3 @@ export async function getCategoryWiseReport(params = {}) {
     throw error;
   }
 }
-

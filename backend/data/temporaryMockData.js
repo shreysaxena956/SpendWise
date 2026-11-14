@@ -2,22 +2,8 @@
  * ============================================================================
  * TEMPORARY MOCK DATASET (FOR DEVELOPMENT & FRONTEND TESTING ONLY)
  * ============================================================================
- * IMPORTANT:
- * This file is strictly a temporary mock dataset created to allow the backend
- * and frontend to be developed and tested before database integration.
- *
- * It models the shared SpendWise database schema agreed upon by the team:
- * - Category: id, name, type
- * - Transaction: id, title, amount, type, date, notes, categoryId (FK), category
- * ============================================================================
- */
-
-/**
- * ============================================================================
- * TEMPORARY MOCK DATASET (FOR DEVELOPMENT & FRONTEND TESTING ONLY)
- * ============================================================================
  * Models the shared SpendWise database schema:
- * - Category: id, name, type
+ * - Category: id, name, type (Member 3 Responsibility)
  * - Transaction: id, title, amount, type, date, notes, categoryId (FK), category
  *
  * Includes the default categories requested for Member 3:
@@ -32,21 +18,32 @@ let categories = [
   // Default fallback category (ID: 1)
   { id: 1, name: "Uncategorised", type: "Expense" },
 
-  // Income categories (IDs: 2 - 5)
+  // Income categories (IDs: 2 - 7)
   { id: 2, name: "Salary", type: "Income" },
   { id: 3, name: "Freelance", type: "Income" },
   { id: 4, name: "Business", type: "Income" },
   { id: 5, name: "Other Income", type: "Income" },
+  { id: 6, name: "Investment", type: "Income" },
+  { id: 7, name: "Gift", type: "Income" },
 
-  // Expense categories (IDs: 6 - 13)
-  { id: 6, name: "Food", type: "Expense" },
-  { id: 7, name: "Travel", type: "Expense" },
-  { id: 8, name: "Shopping", type: "Expense" },
-  { id: 9, name: "Education", type: "Expense" },
-  { id: 10, name: "Entertainment", type: "Expense" },
-  { id: 11, name: "Healthcare", type: "Expense" },
-  { id: 12, name: "Bills", type: "Expense" },
-  { id: 13, name: "Others", type: "Expense" }
+  // Expense categories (IDs: 8 - 15)
+  { id: 8, name: "Food", type: "Expense" },
+  { id: 9, name: "Travel", type: "Expense" },
+  { id: 10, name: "Shopping", type: "Expense" },
+  { id: 11, name: "Education", type: "Expense" },
+  { id: 12, name: "Entertainment", type: "Expense" },
+  { id: 13, name: "Healthcare", type: "Expense" },
+  { id: 14, name: "Bills", type: "Expense" },
+  { id: 15, name: "Others", type: "Expense" },
+
+  // Additional categories for comprehensive tracking (IDs: 16 - 22)
+  { id: 16, name: "Food & Dining", type: "Expense" },
+  { id: 17, name: "Rent & Housing", type: "Expense" },
+  { id: 18, name: "Groceries", type: "Expense" },
+  { id: 19, name: "Utilities", type: "Expense" },
+  { id: 20, name: "Transportation", type: "Expense" },
+  { id: 21, name: "Health & Fitness", type: "Expense" },
+  { id: 22, name: "Miscellaneous", type: "Expense" }
 ];
 
 // Helper to get current year and month formatted (YYYY-MM-DD)
@@ -54,7 +51,7 @@ const now = new Date();
 const currentYear = now.getFullYear();
 const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
 
-// Initial sample transactions
+// Initial sample transactions (Member 1 & Member 3 Integration)
 let transactions = [
   {
     id: 1,
@@ -71,7 +68,7 @@ let transactions = [
     title: "Apartment Rent & Maintenance",
     amount: 15000.0,
     type: "Expense",
-    categoryId: 12,
+    categoryId: 14,
     category: "Bills",
     date: `${currentYear}-${currentMonth}-02`,
     notes: "Paid monthly rent via bank transfer"
@@ -81,7 +78,7 @@ let transactions = [
     title: "Weekly Grocery Run",
     amount: 3200.0,
     type: "Expense",
-    categoryId: 6,
+    categoryId: 8,
     category: "Food",
     date: `${currentYear}-${currentMonth}-05`,
     notes: "Vegetables, milk, fruits, and groceries"
@@ -101,7 +98,7 @@ let transactions = [
     title: "Electricity & Internet Bill",
     amount: 2400.0,
     type: "Expense",
-    categoryId: 12,
+    categoryId: 14,
     category: "Bills",
     date: `${currentYear}-${currentMonth}-12`,
     notes: "Broadband fiber and electricity"
@@ -111,7 +108,7 @@ let transactions = [
     title: "Dinner with Friends",
     amount: 1850.0,
     type: "Expense",
-    categoryId: 6,
+    categoryId: 8,
     category: "Food",
     date: `${currentYear}-${currentMonth}-14`,
     notes: "Weekend dinner at bistro"
@@ -121,7 +118,7 @@ let transactions = [
     title: "Metro & Cab Commute",
     amount: 1200.0,
     type: "Expense",
-    categoryId: 7,
+    categoryId: 9,
     category: "Travel",
     date: `${currentYear}-${currentMonth}-18`,
     notes: "Monthly transit pass recharge"
@@ -131,7 +128,7 @@ let transactions = [
     title: "Movie Tickets & Snacks",
     amount: 900.0,
     type: "Expense",
-    categoryId: 10,
+    categoryId: 12,
     category: "Entertainment",
     date: `${currentYear}-${currentMonth}-20`,
     notes: "Weekend movie outing"
@@ -139,7 +136,7 @@ let transactions = [
 ];
 
 // Helper auto-increment counter for IDs
-let nextCategoryId = 14;
+let nextCategoryId = 23;
 let nextTransactionId = 9;
 
 module.exports = {

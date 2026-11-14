@@ -3,38 +3,51 @@
  * SpendWise - Category Controller
  * Module: Categories & Transaction History (Member 3 Responsibility)
  * ============================================================================
- * Handles business logic for categories:
- * - View all categories (GET /api/categories, with optional ?type= filter)
- * - View single category by ID (GET /api/categories/:id)
- * - Create a new category (POST /api/categories)
- * - Update an existing category (PUT /api/categories/:id)
- * - Delete a category (DELETE /api/categories/:id)
+ * Handles business logic for category management:
+ * 1. View all categories (GET /api/categories, with optional ?type=Income/Expense)
+ * 2. View single category by ID (GET /api/categories/:id)
+ * 3. Create a new category (POST /api/categories)
+ * 4. Update an existing category (PUT /api/categories/:id)
+ * 5. Delete a category safely (DELETE /api/categories/:id)
  *
- * Special Requirement:
- * When deleting a category, all associated transactions are automatically
- * reassigned to the default 'Uncategorised' category to prevent orphan records.
+ * Enforces business rules:
+ * - Category names must be non-empty and unique (case-insensitive).
+ * - Category type must be strictly 'Income' or 'Expense'.
+ * - Default 'Uncategorised' category cannot be deleted or renamed.
+ * - When deleting a category, all associated transactions are automatically
+ *   reassigned to the default 'Uncategorised' category to prevent orphan records.
  * ============================================================================
  */
 
 const prisma = require('../config/prisma');
 
 /**
- * 1. Get all categories
- * Supports optional query parameter: ?type=Income or ?type=Expense
+ * 1. GET /api/categories
+ * Retrieves all categories, optionally filtered by type ('Income' or 'Expense').
  */
 async function getAllCategories(req, res, next) {
   try {
     const { type } = req.query;
 
     const where = {};
-    if (type && type !== 'All') {
-      // Normalize type to Title Case (e.g., 'income' -> 'Income')
+    if (type && typeof type === 'string' && type.trim() !== '' && type !== 'All') {
+      const trimmed = type.trim();
       const normalizedType =
-        type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-      where.type = normalizedType;
+        trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+      if (normalizedType === 'Income' || normalizedType === 'Expense') {
+        where.type = normalizedType;
+      }
     }
 
     const categories = await prisma.category.findMany({ where });
+
+    // Sort categories: Income first, then Expense, then alphabetical by name
+    categories.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type.localeCompare(b.type);
+      }
+      return a.name.localeCompare(b.name);
+    });
 
     res.status(200).json({
       success: true,
@@ -47,7 +60,8 @@ async function getAllCategories(req, res, next) {
 }
 
 /**
- * 2. Get category by ID
+ * 2. GET /api/categories/:id
+ * Retrieves a single category by its primary key ID.
  */
 async function getCategoryById(req, res, next) {
   try {
@@ -81,14 +95,14 @@ async function getCategoryById(req, res, next) {
 }
 
 /**
- * 3. Create a new category
- * Validates name, type, and checks for duplicate names
+ * 3. POST /api/categories
+ * Creates a new category with validation and duplicate prevention.
  */
 async function createCategory(req, res, next) {
   try {
     const { name, type } = req.body;
 
-    // Validation 1: Name is required and cannot be empty or just whitespace
+    // 1. Validation: Name is required and cannot be empty
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({
         success: false,
@@ -98,9 +112,22 @@ async function createCategory(req, res, next) {
 
     const trimmedName = name.trim();
 
-    // Validation 2: Type must be either 'Income' or 'Expense'
+    if (trimmedName.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Category name cannot exceed 50 characters.'
+      });
+    }
+
+    // 2. Validation: Type must be either 'Income' or 'Expense'
     let normalizedType = 'Expense';
     if (type) {
+      if (typeof type !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: "Category type must be either 'Income' or 'Expense'."
+        });
+      }
       normalizedType =
         type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
       if (normalizedType !== 'Income' && normalizedType !== 'Expense') {
@@ -111,7 +138,7 @@ async function createCategory(req, res, next) {
       }
     }
 
-    // Validation 3: Duplicate category handling (case-insensitive check)
+    // 3. Duplicate check: Case-insensitive check across existing categories
     const allCategories = await prisma.category.findMany();
     const isDuplicate = allCategories.some(
       (c) => c.name.toLowerCase() === trimmedName.toLowerCase()
@@ -124,7 +151,7 @@ async function createCategory(req, res, next) {
       });
     }
 
-    // Create the new category
+    // 4. Create category in database
     const newCategory = await prisma.category.create({
       data: {
         name: trimmedName,
@@ -143,8 +170,8 @@ async function createCategory(req, res, next) {
 }
 
 /**
- * 4. Update an existing category
- * Validates ID, name, type, and avoids duplicate naming
+ * 4. PUT /api/categories/:id
+ * Updates an existing category's name and/or type.
  */
 async function updateCategory(req, res, next) {
   try {
@@ -157,7 +184,7 @@ async function updateCategory(req, res, next) {
       });
     }
 
-    // Check if category exists
+    // 1. Verify category exists
     const existing = await prisma.category.findUnique({
       where: { id: categoryId }
     });
@@ -172,7 +199,7 @@ async function updateCategory(req, res, next) {
     const { name, type } = req.body;
     const updateData = {};
 
-    // Validate and update name if provided
+    // 2. Validate and prepare name update
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim() === '') {
         return res.status(400).json({
@@ -182,6 +209,12 @@ async function updateCategory(req, res, next) {
       }
 
       const trimmedName = name.trim();
+      if (trimmedName.length > 50) {
+        return res.status(400).json({
+          success: false,
+          error: 'Category name cannot exceed 50 characters.'
+        });
+      }
 
       // Protect the default 'Uncategorised' category from being renamed
       if (
@@ -194,13 +227,13 @@ async function updateCategory(req, res, next) {
         });
       }
 
-      // Check for duplicate name across other categories (case-insensitive)
+      // Check if another category already uses this name (case-insensitive)
       const allCategories = await prisma.category.findMany();
-      const isDuplicate = allCategories.some(
+      const duplicate = allCategories.find(
         (c) => c.id !== categoryId && c.name.toLowerCase() === trimmedName.toLowerCase()
       );
 
-      if (isDuplicate) {
+      if (duplicate) {
         return res.status(400).json({
           success: false,
           error: `Another category named '${trimmedName}' already exists.`
@@ -210,8 +243,15 @@ async function updateCategory(req, res, next) {
       updateData.name = trimmedName;
     }
 
-    // Validate and update type if provided
+    // 3. Validate and prepare type update
     if (type !== undefined) {
+      if (typeof type !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: "Category type must be either 'Income' or 'Expense'."
+        });
+      }
+
       const normalizedType =
         type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
       if (normalizedType !== 'Income' && normalizedType !== 'Expense') {
@@ -220,24 +260,26 @@ async function updateCategory(req, res, next) {
           error: "Category type must be either 'Income' or 'Expense'."
         });
       }
+
       updateData.type = normalizedType;
     }
 
+    // 4. Update the category record
     const updated = await prisma.category.update({
       where: { id: categoryId },
       data: updateData
     });
 
-    // If the category name changed, also update the category name on existing transactions
+    // 5. If category name changed, synchronize associated transactions
     if (updateData.name && updateData.name !== existing.name) {
-      const allTx = await prisma.transaction.findMany();
-      for (const tx of allTx) {
-        if (Number(tx.categoryId) === categoryId) {
-          await prisma.transaction.update({
-            where: { id: tx.id },
-            data: { category: updateData.name }
-          });
-        }
+      const linkedTransactions = await prisma.transaction.findMany({
+        where: { categoryId: categoryId }
+      });
+      for (let i = 0; i < linkedTransactions.length; i++) {
+        await prisma.transaction.update({
+          where: { id: linkedTransactions[i].id },
+          data: { category: updateData.name }
+        });
       }
     }
 
@@ -252,11 +294,10 @@ async function updateCategory(req, res, next) {
 }
 
 /**
- * 5. Delete a category
- * Requirement:
- * If deleting a record, handle orphan records appropriately by putting
- * them in 'Uncategorised' category and then delete.
- * The default 'Uncategorised' category itself cannot be deleted.
+ * 5. DELETE /api/categories/:id
+ * Deletes a category safely:
+ * - The default 'Uncategorised' category cannot be deleted.
+ * - Reassigns all associated transactions to 'Uncategorised' to prevent orphan records.
  */
 async function deleteCategory(req, res, next) {
   try {
@@ -269,7 +310,7 @@ async function deleteCategory(req, res, next) {
       });
     }
 
-    // 1. Check if category exists
+    // 1. Verify category exists
     const existing = await prisma.category.findUnique({
       where: { id: categoryId }
     });

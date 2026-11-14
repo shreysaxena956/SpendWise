@@ -130,6 +130,13 @@ async function getAllTransactions(req, res, next) {
   try {
     const { type, category, categoryId, month, year, startDate, endDate, search, sortBy, order } = req.query;
 
+    // Fetch categories map for filtering and name resolution
+    const categoriesList = await prisma.category.findMany();
+    const categoryMap = {};
+    for (let i = 0; i < categoriesList.length; i++) {
+      categoryMap[categoriesList[i].id] = categoriesList[i].name;
+    }
+
     const where = {};
 
     // Filter by type: Income / Expense
@@ -141,16 +148,21 @@ async function getAllTransactions(req, res, next) {
       }
     }
 
-    // Filter by category name
-    if (category) {
-      where.category = category.trim();
-    }
-
-    // Filter by category ID
+    // Filter by category name or category ID
     if (categoryId) {
       const parsedCatId = parseInt(categoryId, 10);
       if (!isNaN(parsedCatId)) {
         where.categoryId = parsedCatId;
+      }
+    } else if (category && typeof category === 'string' && category.trim() !== '') {
+      const catTrimmed = category.trim();
+      const matchedCat = categoriesList.find(
+        c => c.name.toLowerCase() === catTrimmed.toLowerCase()
+      );
+      if (matchedCat) {
+        where.categoryId = matchedCat.id;
+      } else {
+        where.category = catTrimmed;
       }
     }
 
@@ -189,34 +201,31 @@ async function getAllTransactions(req, res, next) {
       orderBy
     });
 
+    // Format transactions ensuring clean category name resolution
+    let formattedTransactions = transactions.map(t => {
+      let catName = 'Uncategorised';
+      if (t.category && typeof t.category === 'object' && t.category.name) {
+        catName = t.category.name;
+      } else if (typeof t.category === 'string' && t.category.trim() !== '') {
+        catName = t.category;
+      } else if (t.categoryId && categoryMap[t.categoryId]) {
+        catName = categoryMap[t.categoryId];
+      }
+
+      return {
+        ...t,
+        category: catName
+      };
+    });
+
     // Optional text search: find transactions by title (or notes)
     if (search && typeof search === 'string' && search.trim() !== '') {
       const keyword = search.trim().toLowerCase();
-      transactions = transactions.filter(t =>
+      formattedTransactions = formattedTransactions.filter(t =>
         (t.title && t.title.toLowerCase().includes(keyword)) ||
         (t.notes && t.notes.toLowerCase().includes(keyword))
       );
     }
-
-    // Ensure category name is always populated using categoryId if missing
-    const categories = await prisma.category.findMany();
-    const catMap = {};
-    for (let i = 0; i < categories.length; i++) {
-      catMap[categories[i].id] = categories[i].name;
-    }
-
-    const formattedTransactions = transactions.map(tx => {
-      let resolvedCategory = tx.category;
-      if (!resolvedCategory && tx.categoryId && catMap[tx.categoryId]) {
-        resolvedCategory = catMap[tx.categoryId];
-      } else if (tx.categoryId && catMap[tx.categoryId]) {
-        resolvedCategory = catMap[tx.categoryId];
-      }
-      return {
-        ...tx,
-        category: resolvedCategory || 'Uncategorised'
-      };
-    });
 
     res.status(200).json({
       success: true,

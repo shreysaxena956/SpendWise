@@ -40,8 +40,19 @@ const PORT = process.env.PORT || 5000;
 // Global Middleware Setup
 // ============================================================================
 
-// 1. Enable CORS so the React frontend can communicate with this backend
-app.use(cors());
+// 1. Allow the deployed frontend and local Vite development server.
+const allowedOrigins = new Set([
+  'https://spendwise-frontend-iozh.onrender.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(origin => origin.trim()) : [])
+]);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(new Error('Origin is not allowed by CORS.'));
+  }
+}));
 
 // 2. Parse incoming JSON request bodies
 app.use(express.json());

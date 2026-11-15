@@ -9,8 +9,13 @@
  * ============================================================================
  */
 
-// Base API URL (falls back to local Express server port 5000 if not proxying)
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Use the local Vite proxy during development and the deployed API in production.
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_BASE = import.meta.env.DEV
+  ? configuredApiUrl || '/api'
+  : /^https?:\/\//i.test(configuredApiUrl || '')
+    ? configuredApiUrl.replace(/\/$/, '')
+    : 'https://spendwise-2rox.onrender.com/api';
 /**
  * 1. Fetch all transactions with optional query filters
  * @param {Object} filters - { type, category, categoryId, month, year, search }

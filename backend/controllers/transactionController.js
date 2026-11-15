@@ -13,6 +13,22 @@
 
 const prisma = require('../config/prisma');
 
+function dateOnly(value) {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '').slice(0, 10);
+}
+
+function toApiTransaction(transaction, fallbackCategory = 'Uncategorised') {
+  const category = transaction.category && typeof transaction.category === 'object'
+    ? transaction.category.name
+    : transaction.category;
+  return {
+    ...transaction,
+    amount: Number(transaction.amount),
+    date: dateOnly(transaction.date),
+    category: category || fallbackCategory
+  };
+}
+
 /**
  * Helper function to validate and normalize transaction payload
  * Validates: title, amount, type, category/categoryId, date, notes
@@ -32,8 +48,8 @@ async function validateTransactionData(data, isUpdate = false) {
 
   // 2. Validate amount
   if (!isUpdate || data.amount !== undefined) {
-    const numAmount = parseFloat(data.amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
+    const numAmount = Number(data.amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
       errors.push('Amount must be a positive number greater than zero.');
     } else {
       normalized.amount = numAmount;
@@ -56,13 +72,13 @@ async function validateTransactionData(data, isUpdate = false) {
   }
 
   // 4. Validate category and categoryId (Coordinated with Member 3)
-  if (!isUpdate || data.category !== undefined || data.categoryId !== undefined) {
+  if (!isUpdate || data.category !== undefined || data.categoryId !== undefined || data.type !== undefined) {
     let categoryRecord = null;
 
     // Check if categoryId is provided as number or numeric string
     if (data.categoryId !== undefined && data.categoryId !== null && data.categoryId !== '') {
-      const parsedCatId = parseInt(data.categoryId, 10);
-      if (!isNaN(parsedCatId)) {
+      const parsedCatId = Number(data.categoryId);
+      if (Number.isSafeInteger(parsedCatId) && parsedCatId > 0) {
         categoryRecord = await prisma.category.findUnique({
           where: { id: parsedCatId }
         });
@@ -94,10 +110,13 @@ async function validateTransactionData(data, isUpdate = false) {
     if (!categoryRecord) {
       const provided = data.category || data.categoryId || 'none';
       errors.push(`Category '${provided}' does not exist. Please choose an existing category.`);
+    } else if (normalized.type && categoryRecord.type !== normalized.type) {
+      errors.push(`Category '${categoryRecord.name}' is not an ${normalized.type.toLowerCase()} category.`);
     } else {
       normalized.category = {
-  connect: { id: categoryRecord.id }
-};
+        connect: { id: categoryRecord.id }
+      };
+    }
   }
 
   // 5. Validate date (format: YYYY-MM-DD)
@@ -105,12 +124,15 @@ async function validateTransactionData(data, isUpdate = false) {
     if (!data.date) {
       errors.push('Date is required (format: YYYY-MM-DD).');
     } else {
-      const parsedDate = new Date(data.date);
-      if (isNaN(parsedDate.getTime())) {
+      const dateValue = typeof data.date === 'string' ? data.date.trim() : '';
+      const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+        ? new Date(`${dateValue}T00:00:00.000Z`)
+        : new Date(NaN);
+      if (isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== dateValue) {
         errors.push('Date is invalid. Please provide a valid date string (e.g. YYYY-MM-DD).');
       } else {
         // Store as YYYY-MM-DD string format
-        normalized.date = parsedDate.toISOString().slice(0, 10);
+        normalized.date = dateValue;
       }
     }
   }
@@ -192,13 +214,15 @@ async function getAllTransactions(req, res, next) {
     }
 
     // Sorting options (default by date descending)
-    const sortField = sortBy || 'date';
+    const allowedSortFields = new Set(['date', 'amount', 'title', 'createdAt']);
+    const sortField = allowedSortFields.has(sortBy) ? sortBy : 'date';
     const sortOrder = order === 'asc' ? 'asc' : 'desc';
     const orderBy = { [sortField]: sortOrder };
 
     let transactions = await prisma.transaction.findMany({
       where,
-      orderBy
+      orderBy,
+      include: { category: true }
     });
 
     // Format transactions ensuring clean category name resolution
@@ -212,10 +236,7 @@ async function getAllTransactions(req, res, next) {
         catName = categoryMap[t.categoryId];
       }
 
-      return {
-        ...t,
-        category: catName
-      };
+      return toApiTransaction(t, catName);
     });
 
     // Optional text search: find transactions by title (or notes)
@@ -250,7 +271,8 @@ async function getTransactionById(req, res, next) {
     }
 
     const transaction = await prisma.transaction.findUnique({
-      where: { id: transactionId }
+      where: { id: transactionId },
+      include: { category: true }
     });
 
     if (!transaction) {
@@ -262,7 +284,7 @@ async function getTransactionById(req, res, next) {
 
     res.status(200).json({
       success: true,
-      data: transaction
+      data: toApiTransaction(transaction)
     });
   } catch (error) {
     next(error);
@@ -282,13 +304,14 @@ async function createTransaction(req, res, next) {
     }
 
     const newTransaction = await prisma.transaction.create({
-      data: validation.data
+      data: validation.data,
+      include: { category: true }
     });
 
     res.status(201).json({
       success: true,
       message: `${newTransaction.type} transaction recorded successfully.`,
-      data: newTransaction
+      data: toApiTransaction(newTransaction)
     });
   } catch (error) {
     next(error);
@@ -320,7 +343,11 @@ async function updateTransaction(req, res, next) {
     }
 
     // Validate update payload
-    const validation = await validateTransactionData(req.body, true);
+    const validation = await validateTransactionData({
+      ...req.body,
+      categoryId: req.body.categoryId ?? (req.body.category !== undefined ? undefined : existing.categoryId),
+      type: req.body.type ?? existing.type
+    }, true);
 
     if (!validation.isValid) {
       return res.status(400).json({
@@ -332,13 +359,14 @@ async function updateTransaction(req, res, next) {
     // Update the transaction in database
     const updatedTransaction = await prisma.transaction.update({
       where: { id: transactionId },
-      data: validation.data
+      data: validation.data,
+      include: { category: true }
     });
 
     res.status(200).json({
       success: true,
       message: 'Transaction updated successfully.',
-      data: updatedTransaction
+      data: toApiTransaction(updatedTransaction)
     });
   } catch (error) {
     next(error);

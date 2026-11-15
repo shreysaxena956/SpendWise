@@ -125,6 +125,13 @@ function createMockPrismaClient() {
         let catId = args.data.categoryId ? Number(args.data.categoryId) : null;
         let catName = args.data.category || '';
 
+        // Support Prisma's relation connect syntax used by the real client.
+        if (args.data.category?.connect?.id) {
+          catId = Number(args.data.category.connect.id);
+          const connected = mockData.categories.find(c => c.id === catId);
+          catName = connected?.name || '';
+        }
+
         // Resolve missing categoryId or category name
         if (!catId && catName) {
           const found = mockData.categories.find(
@@ -166,19 +173,27 @@ function createMockPrismaClient() {
         let catId = args.data.categoryId !== undefined ? Number(args.data.categoryId) : current.categoryId;
         let catName = args.data.category !== undefined ? args.data.category : current.category;
 
+        if (args.data.category?.connect?.id) {
+          catId = Number(args.data.category.connect.id);
+          const connected = mockData.categories.find(c => c.id === catId);
+          catName = connected?.name || current.category;
+        }
+
         if (args.data.categoryId !== undefined && args.data.category === undefined) {
           const found = mockData.categories.find(c => c.id === catId);
           if (found) catName = found.name;
-        } else if (args.data.category !== undefined && args.data.categoryId === undefined) {
+        } else if (args.data.category !== undefined && args.data.categoryId === undefined && !args.data.category?.connect) {
           const found = mockData.categories.find(
             c => c.name.toLowerCase() === catName.toLowerCase()
           );
           if (found) catId = found.id;
         }
 
+        const scalarData = { ...args.data };
+        delete scalarData.category;
         const updated = {
           ...current,
-          ...args.data,
+          ...scalarData,
           id: current.id, // preserve id
           categoryId: catId,
           category: catName,

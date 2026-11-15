@@ -17,20 +17,20 @@ The database architecture is collaboratively shared between:
 erDiagram
     CATEGORIES {
         int id PK "SERIAL Auto-increment, Primary Key"
-        varchar name "VARCHAR(50), NOT NULL, UNIQUE"
-        varchar type "VARCHAR(10), NOT NULL, CHECK ('Income', 'Expense')"
-        timestamp created_at "TIMESTAMP WITH TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
+        text name "TEXT, NOT NULL, UNIQUE (50 character application limit)"
+        text type "TEXT, NOT NULL, CHECK ('Income', 'Expense')"
+        timestamp created_at "TIMESTAMP WITHOUT TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
     }
 
     TRANSACTIONS {
         int id PK "SERIAL Auto-increment, Primary Key"
-        varchar title "VARCHAR(150), NOT NULL"
-        numeric amount "NUMERIC(12,2), NOT NULL, CHECK (amount > 0)"
-        varchar type "VARCHAR(10), NOT NULL, CHECK ('Income', 'Expense')"
-        date date "DATE, NOT NULL (YYYY-MM-DD)"
+        text title "TEXT, NOT NULL"
+        double amount "DOUBLE PRECISION, NOT NULL, CHECK (amount > 0)"
+        text type "TEXT, NOT NULL, CHECK ('Income', 'Expense')"
+        text date "TEXT, NOT NULL (YYYY-MM-DD)"
         text notes "TEXT, Nullable"
         int category_id FK "INTEGER, NOT NULL, REFERENCES categories(id)"
-        timestamp created_at "TIMESTAMP WITH TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
+        timestamp created_at "TIMESTAMP WITHOUT TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
     }
 
     CATEGORIES ||--o{ TRANSACTIONS : "classifies (1:N)"
@@ -46,9 +46,9 @@ The `categories` table stores all system-predefined and user-customized transact
 | Column Name | Data Type | Nullable | Key / Constraint | Description |
 | :--- | :--- | :---: | :--- | :--- |
 | `id` | `SERIAL` (`INT4`) | **NO** | `PRIMARY KEY`, Auto-increment | Unique identifier for each category record. |
-| `name` | `VARCHAR(50)` | **NO** | `UNIQUE`, `chk_category_name_not_empty` | User-visible category title (e.g., "Food", "Salary"). Cannot be whitespace only. |
-| `type` | `VARCHAR(10)` | **NO** | `chk_category_type` | Must be strictly `'Income'` or `'Expense'`. |
-| `created_at` | `TIMESTAMPTZ` | **NO** | `DEFAULT CURRENT_TIMESTAMP` | System audit creation timestamp. |
+| `name` | `TEXT` | **NO** | `UNIQUE`, `chk_category_name_not_empty` | User-visible category title (50 character application limit). Cannot be whitespace only. |
+| `type` | `TEXT` | **NO** | `chk_category_type` | Must be strictly `'Income'` or `'Expense'`. |
+| `created_at` | `TIMESTAMP` | **NO** | `DEFAULT CURRENT_TIMESTAMP` | System audit creation timestamp. |
 
 #### Constraints on `categories`:
 1. `PRIMARY KEY (id)`: Guarantees unique entity identification.
@@ -64,13 +64,13 @@ The `transactions` table contains every financial earning or expenditure recorde
 | Column Name | Data Type | Nullable | Key / Constraint | Description |
 | :--- | :--- | :---: | :--- | :--- |
 | `id` | `SERIAL` (`INT4`) | **NO** | `PRIMARY KEY`, Auto-increment | Unique identifier for each transaction record. |
-| `title` | `VARCHAR(150)` | **NO** | `chk_transaction_title_not_empty` | Human-readable title/description of the transaction. |
-| `amount` | `NUMERIC(12, 2)` | **NO** | `chk_transaction_amount_positive` | Exact monetary amount in currency (positive decimal). |
-| `type` | `VARCHAR(10)` | **NO** | `chk_transaction_type` | Must be strictly `'Income'` or `'Expense'`. |
-| `date` | `DATE` | **NO** | Valid calendar date | Date of transaction in ISO format (`YYYY-MM-DD`). |
+| `title` | `TEXT` | **NO** | `chk_transaction_title_not_empty` | Human-readable title/description of the transaction. |
+| `amount` | `DOUBLE PRECISION` | **NO** | `chk_transaction_amount_positive` | Positive monetary amount. |
+| `type` | `TEXT` | **NO** | `chk_transaction_type` | Must be strictly `'Income'` or `'Expense'`. |
+| `date` | `TEXT` | **NO** | ISO date format (`YYYY-MM-DD`) | Date of transaction. |
 | `notes` | `TEXT` | **YES** | None | Optional transaction notes, reference numbers, or context. |
 | `category_id` | `INTEGER` | **NO** | `FOREIGN KEY → categories(id)` | Relational link to the associated parent category. |
-| `created_at` | `TIMESTAMPTZ` | **NO** | `DEFAULT CURRENT_TIMESTAMP` | System audit creation timestamp. |
+| `created_at` | `TIMESTAMP` | **NO** | `DEFAULT CURRENT_TIMESTAMP` | System audit creation timestamp. |
 
 #### Constraints on `transactions`:
 1. `PRIMARY KEY (id)`: Guarantees unique entity identification.

@@ -305,20 +305,20 @@ SpendWise implements a relational database schema designed in **Third Normal For
 erDiagram
     CATEGORIES {
         int id PK "SERIAL Auto-increment"
-        varchar name "NOT NULL UNIQUE (max 50)"
-        varchar type "NOT NULL CHECK ('Income', 'Expense')"
-        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+        text name "NOT NULL UNIQUE (50 character application limit)"
+        text type "NOT NULL CHECK ('Income', 'Expense')"
+        timestamp created_at "TIMESTAMP WITHOUT TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
     }
 
     TRANSACTIONS {
         int id PK "SERIAL Auto-increment"
-        varchar title "NOT NULL (max 150)"
-        numeric amount "NOT NULL CHECK (amount > 0)"
+        text title "NOT NULL"
+        double amount "NOT NULL CHECK (amount > 0)"
         varchar type "NOT NULL CHECK ('Income', 'Expense')"
-        date date "NOT NULL (YYYY-MM-DD)"
+        text date "NOT NULL (YYYY-MM-DD)"
         text notes "Nullable"
         int category_id FK "NOT NULL REFERENCES categories(id)"
-        timestamp created_at "DEFAULT CURRENT_TIMESTAMP"
+        timestamp created_at "TIMESTAMP WITHOUT TIME ZONE, DEFAULT CURRENT_TIMESTAMP"
     }
 
     CATEGORIES ||--o{ TRANSACTIONS : "categorizes (1:N)"
@@ -328,16 +328,16 @@ erDiagram
 
 #### 1. `categories` Table
 - **`id`** (`SERIAL PRIMARY KEY`): Unique auto-incrementing category identifier.
-- **`name`** (`VARCHAR(50) NOT NULL UNIQUE`): Category name. Guarded by `chk_category_name_not_empty` (`LENGTH(TRIM(name)) > 0`).
-- **`type`** (`VARCHAR(10) NOT NULL`): Strictly restricted via `CHECK (type IN ('Income', 'Expense'))`.
-- **`created_at`** (`TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`): Record creation timestamp.
+- **`name`** (`TEXT NOT NULL UNIQUE`): Category name (50 character application limit). Guarded by `chk_category_name_not_empty` (`LENGTH(TRIM(name)) > 0`).
+- **`type`** (`TEXT NOT NULL`): Strictly restricted via `CHECK (type IN ('Income', 'Expense'))`.
+- **`created_at`** (`TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP`): Record creation timestamp.
 
 #### 2. `transactions` Table
 - **`id`** (`SERIAL PRIMARY KEY`): Unique auto-incrementing transaction identifier.
-- **`title`** (`VARCHAR(150) NOT NULL`): Description of transaction. Guarded by `chk_transaction_title_not_empty`.
-- **`amount`** (`NUMERIC(12, 2) NOT NULL`): Financial value. Guarded by `CHECK (amount > 0)` ensuring strictly positive values.
-- **`type`** (`VARCHAR(10) NOT NULL`): Restricted via `CHECK (type IN ('Income', 'Expense'))`.
-- **`date`** (`DATE NOT NULL`): Calendar date stored as ISO date string (`YYYY-MM-DD`).
+- **`title`** (`TEXT NOT NULL`): Description of transaction. Guarded by `chk_transaction_title_not_empty`.
+- **`amount`** (`DOUBLE PRECISION NOT NULL`): Financial value. Guarded by `CHECK (amount > 0)` ensuring strictly positive values.
+- **`type`** (`TEXT NOT NULL`): Restricted via `CHECK (type IN ('Income', 'Expense'))`.
+- **`date`** (`TEXT NOT NULL`): Calendar date stored as an ISO date string (`YYYY-MM-DD`).
 - **`notes`** (`TEXT`): Optional supplementary details or bank reference notes.
 - **`category_id`** (`INTEGER NOT NULL`): Foreign key referencing `categories(id)`.
   - `ON DELETE RESTRICT`: Prohibits raw SQL deletes that leave orphaned records.
@@ -513,8 +513,11 @@ Set `USE_MOCK=true` in `backend/.env`. No database setup or SQL execution is nee
 5. **Generate Prisma Client**:
    ```bash
    cd backend
-   npx prisma generate
+   npm run db:generate
+   npm run db:seed
    ```
+
+   The seed command safely inserts missing default categories and leaves existing categories and transactions untouched. For an existing database, do not run `database/sample_data.sql` unless you intentionally want its demo records.
 
 ---
 
@@ -538,7 +541,9 @@ cd frontend
 npm run dev
 ```
 - Client URL: **`http://localhost:5173`**
-- Vite automatically proxies `/api/*` requests to the backend server.
+- Vite reads `backend/.env` and automatically proxies `/api/*` requests to that backend port.
+
+For a separate frontend host, set `VITE_API_URL` to the backend API base, for example `https://spendwise-2rox.onrender.com/api`. The production build defaults to the configured SpendWise Render backend when this variable is omitted.
 
 ### 3. Build for Production
 To generate an optimized client production bundle:
@@ -560,7 +565,7 @@ cd backend
 npm test
 ```
 
-### Verified Test Results (33/33 Tests Passing)
+### Verified Test Results (36/36 Tests Passing)
 
 ```text
 ========================================
@@ -577,6 +582,8 @@ npm test
   ✓ PASS: DELETE /api/categories/:id rejects deleting default Uncategorised category
   ✓ PASS: DELETE /api/categories/:id reassigns linked transaction to Uncategorised
   ✓ PASS: Orphaned transaction successfully moved to Uncategorised category
+  ✓ PASS: PUT category type rejects changes while transactions use it
+  ✓ PASS: DELETE income category reassigns transactions to an income fallback
   ✓ PASS: POST /api/transactions creates valid income
   ✓ PASS: POST /api/transactions creates valid expense
   ✓ PASS: POST /api/transactions with negative amount returns 400
@@ -584,6 +591,7 @@ npm test
   ✓ PASS: POST /api/transactions with empty title returns 400
   ✓ PASS: POST /api/transactions with bad type returns 400
   ✓ PASS: POST /api/transactions with invalid category returns 400
+  ✓ PASS: POST /api/transactions rejects category/type mismatch
   ✓ PASS: POST /api/transactions with categoryId FK works properly
   ✓ PASS: GET /api/transactions returns transactions
   ✓ PASS: GET /api/transactions?type=Income filters correctly
@@ -601,7 +609,7 @@ npm test
   ✓ PASS: Unknown endpoint returns 404
 
 ========================================
-Results: 33 Passed, 0 Failed (100%)
+Results: 36 Passed, 0 Failed (100%)
 ========================================
 ```
 

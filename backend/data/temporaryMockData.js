@@ -17,6 +17,7 @@
 let categories = [
   // Default fallback category (ID: 1)
   { id: 1, name: "Uncategorised", type: "Expense" },
+  { id: 23, name: "Uncategorised Income", type: "Income" },
 
   // Income categories (IDs: 2 - 7)
   { id: 2, name: "Salary", type: "Income" },
@@ -136,7 +137,7 @@ let transactions = [
 ];
 
 // Helper auto-increment counter for IDs
-let nextCategoryId = 23;
+let nextCategoryId = 24;
 let nextTransactionId = 9;
 
 module.exports = {

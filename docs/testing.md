@@ -64,7 +64,7 @@ npm test
   ✓ PASS: Unknown endpoint returns 404
 
 ==================================================
-Results: 33 Passed, 0 Failed (100% Success Rate)
+Results: 36 Passed, 0 Failed (100% Success Rate)
 ==================================================
 ```
 

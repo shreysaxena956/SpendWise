@@ -128,6 +128,36 @@ const server = app.listen(0, async () => {
     // Clean up temporary transaction
     await request('DELETE', `/api/transactions/${tempTxId}`);
 
+    // Income categories retain the transaction type when safely deleted.
+    const tempIncomeCat = await request('POST', '/api/categories', {
+      name: 'Temporary Income Audit',
+      type: 'Income'
+    });
+    const incomeTx = await request('POST', '/api/transactions', {
+      title: 'Temporary Income Category Audit',
+      amount: 1,
+      type: 'Income',
+      categoryId: tempIncomeCat.body.data.id,
+      date: '2026-11-05'
+    });
+    const blockedCategoryTypeChange = await request(
+      'PUT',
+      `/api/categories/${tempIncomeCat.body.data.id}`,
+      { type: 'Expense' }
+    );
+    assert(blockedCategoryTypeChange.status === 400, 'PUT category type rejects changes while transactions use it');
+    const deleteIncomeCategory = await request(
+      'DELETE',
+      `/api/categories/${tempIncomeCat.body.data.id}`
+    );
+    const reassignedIncome = await request('GET', `/api/transactions/${incomeTx.body.data.id}`);
+    assert(
+      deleteIncomeCategory.status === 200 &&
+      reassignedIncome.body.data.category === 'Uncategorised Income',
+      'DELETE income category reassigns transactions to an income fallback'
+    );
+    await request('DELETE', `/api/transactions/${incomeTx.body.data.id}`);
+
     // 3. Transactions - Create Valid Income & Expense
     const newIncome = await request('POST', '/api/transactions', {
       title: 'Stipend Bonus',
@@ -195,6 +225,15 @@ const server = app.listen(0, async () => {
       date: '2026-11-03'
     });
     assert(invalidCat.status === 400, 'POST /api/transactions with invalid category returns 400');
+
+    const mismatchedCategory = await request('POST', '/api/transactions', {
+      title: 'Income with expense category',
+      amount: 500,
+      type: 'Income',
+      categoryId: 10,
+      date: '2026-11-03'
+    });
+    assert(mismatchedCategory.status === 400, 'POST /api/transactions rejects category/type mismatch');
 
     // 4b. Transaction created using categoryId foreign key
     const txWithCatId = await request('POST', '/api/transactions', {

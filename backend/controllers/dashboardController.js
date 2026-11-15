@@ -17,6 +17,8 @@
 
 const prisma = require('../config/prisma');
 
+const dateOnly = value => value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '').slice(0, 10);
+
 // Month names helper for clear display
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -66,7 +68,7 @@ async function getDashboardSummary(req, res, next) {
       const item = allTransactions[i];
       const amount = parseFloat(item.amount) || 0;
       const type = (item.type || '').toLowerCase();
-      const itemDate = item.date || '';
+      const itemDate = dateOnly(item.date);
 
       // All-time calculation
       if (type === 'income') {
@@ -105,9 +107,9 @@ async function getDashboardSummary(req, res, next) {
       return {
         id: tx.id,
         title: tx.title,
-        amount: parseFloat(tx.amount),
+        amount: Number(tx.amount),
         type: tx.type,
-        date: tx.date,
+        date: dateOnly(tx.date),
         notes: tx.notes || '',
         categoryId: tx.categoryId,
         category: categoryName

@@ -19,7 +19,7 @@ model Category {
   id           Int           @id @default(autoincrement())
   name         String        @unique
   type         String        // "Income" or "Expense"
-  createdAt    DateTime      @default(now()) @map("created_at")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
   transactions Transaction[]
 
   @@map("categories")
@@ -33,11 +33,11 @@ model Transaction {
   title      String
   amount     Float
   type       String   // "Income" or "Expense"
-  date       String   // Format: "YYYY-MM-DD"
+  date       String   // Stored as an ISO calendar date (YYYY-MM-DD)
   notes      String?
   categoryId Int      @map("category_id")
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   @@index([date(sort: Desc)])
   @@index([type])

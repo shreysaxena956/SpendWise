@@ -23,6 +23,8 @@
 
 const prisma = require('../config/prisma');
 
+const dateOnly = value => value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '').slice(0, 10);
+
 // Friendly month names array for reports display
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -105,7 +107,7 @@ async function getMonthlyReport(req, res, next) {
       const tx = yearTransactions[i];
       const amount = parseFloat(tx.amount) || 0;
       const type = (tx.type || '').toLowerCase();
-      const dateStr = tx.date || '';
+      const dateStr = dateOnly(tx.date);
 
       // Determine transaction month (from "YYYY-MM-DD")
       const txMonth = parseInt(dateStr.substring(5, 7), 10);
@@ -134,9 +136,9 @@ async function getMonthlyReport(req, res, next) {
         const formattedTx = {
           id: tx.id,
           title: tx.title,
-          amount: parseFloat(tx.amount),
+          amount: Number(tx.amount),
           type: tx.type,
-          date: tx.date,
+          date: dateOnly(tx.date),
           notes: tx.notes || '',
           categoryId: tx.categoryId,
           category: categoryName

@@ -11,8 +11,6 @@
  */
 
 function errorHandler(err, req, res, next) {
-  console.error('[Error Details]:', err.message || err);
-
   // Default error status and message
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
@@ -30,6 +28,12 @@ function errorHandler(err, req, res, next) {
     // Malformed JSON in request body
     statusCode = 400;
     message = 'Invalid JSON in request payload.';
+  }
+
+  if (statusCode >= 500) {
+    // Avoid logging or returning database URLs, query values, or stack details.
+    console.error('[Server Error]', err.name || 'Error', err.code || '');
+    message = 'Internal Server Error';
   }
 
   // Return standard JSON error structure to the client

@@ -14,9 +14,7 @@
 -- - Optimized B-tree indexes for fast querying and filtering
 -- ============================================================================
 
--- Drop tables if they already exist (drop dependent transactions table first)
-DROP TABLE IF EXISTS transactions;
-DROP TABLE IF EXISTS categories;
+-- Safe to rerun: existing tables and data are preserved.
 
 -- ============================================================================
 -- 1. CATEGORIES TABLE
@@ -24,11 +22,11 @@ DROP TABLE IF EXISTS categories;
 -- Coordinated with Member 3.
 -- Stores predefined and user-created income/expense categories.
 -- ============================================================================
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    type VARCHAR(10) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    name TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL,
+    created_at TIMESTAMP(6) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     -- Constraint: Type must be strictly either 'Income' or 'Expense'
     CONSTRAINT chk_category_type CHECK (type IN ('Income', 'Expense')),
@@ -43,15 +41,15 @@ CREATE TABLE categories (
 -- Stores all financial records created by the user.
 -- Each transaction belongs to a category via category_id.
 -- ============================================================================
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    amount NUMERIC(12, 2) NOT NULL,
-    type VARCHAR(10) NOT NULL,
-    date DATE NOT NULL,
+    title TEXT NOT NULL,
+    amount DOUBLE PRECISION NOT NULL,
+    type TEXT NOT NULL,
+    date TEXT NOT NULL,
     notes TEXT,
     category_id INT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP(6) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     -- Foreign Key: References the categories table
     -- ON DELETE RESTRICT prevents deleting a category that still has transactions linked to it

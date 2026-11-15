@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import {
   getTransactions,
   createTransaction,
@@ -17,8 +17,9 @@ import AddIncomeModal from './components/AddIncomeModal';
 import AddExpenseModal from './components/AddExpenseModal';
 import TransactionEditModal from './components/TransactionEditModal';
 import TransactionDeleteModal from './components/TransactionDeleteModal';
-import Dashboard3DView from './components/3d/Dashboard3DView';
 import NotificationToast from './components/NotificationToast';
+
+const Dashboard3DView = lazy(() => import('./components/3d/Dashboard3DView'));
 
 /**
  * ============================================================================
@@ -194,10 +195,12 @@ export default function App() {
   if (activeTab === '3d-dashboard') {
     return (
       <>
-        <Dashboard3DView
-          onBackToDashboard={() => setActiveTab('dashboard')}
-          showNotification={showNotification}
-        />
+        <Suspense fallback={<div className="app-container">Loading 3D Studio…</div>}>
+          <Dashboard3DView
+            onBackToDashboard={() => setActiveTab('dashboard')}
+            showNotification={showNotification}
+          />
+        </Suspense>
         <NotificationToast
           notification={notification}
           onClose={() => setNotification(null)}

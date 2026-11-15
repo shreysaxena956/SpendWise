@@ -21,6 +21,8 @@
 
 const prisma = require('../config/prisma');
 
+const DEFAULT_CATEGORY_NAMES = new Set(['uncategorised', 'uncategorised income']);
+
 /**
  * 1. GET /api/categories
  * Retrieves all categories, optionally filtered by type ('Income' or 'Expense').
@@ -218,8 +220,8 @@ async function updateCategory(req, res, next) {
 
       // Protect the default 'Uncategorised' category from being renamed
       if (
-        existing.name.toLowerCase() === 'uncategorised' &&
-        trimmedName.toLowerCase() !== 'uncategorised'
+        DEFAULT_CATEGORY_NAMES.has(existing.name.toLowerCase()) &&
+        trimmedName.toLowerCase() !== existing.name.toLowerCase()
       ) {
         return res.status(400).json({
           success: false,
@@ -264,6 +266,18 @@ async function updateCategory(req, res, next) {
       updateData.type = normalizedType;
     }
 
+    if (updateData.type && updateData.type !== existing.type) {
+      const linkedTransactions = await prisma.transaction.findMany({
+        where: { categoryId }
+      });
+      if (linkedTransactions.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Category type cannot be changed while transactions use this category.'
+        });
+      }
+    }
+
     // 4. Update the category record
     const updated = await prisma.category.update({
       where: { id: categoryId },
@@ -278,7 +292,7 @@ async function updateCategory(req, res, next) {
       for (let i = 0; i < linkedTransactions.length; i++) {
         await prisma.transaction.update({
           where: { id: linkedTransactions[i].id },
-          data: { category: updateData.name }
+          data: { category: { connect: { id: categoryId } } }
         });
       }
     }
@@ -323,7 +337,7 @@ async function deleteCategory(req, res, next) {
     }
 
     // 2. Prevent deleting the default 'Uncategorised' category
-    if (existing.name.toLowerCase() === 'uncategorised') {
+    if (DEFAULT_CATEGORY_NAMES.has(existing.name.toLowerCase())) {
       return res.status(400).json({
         success: false,
         error: "Cannot delete the default 'Uncategorised' category."
@@ -331,16 +345,17 @@ async function deleteCategory(req, res, next) {
     }
 
     // 3. Find or ensure the 'Uncategorised' fallback category exists
+    const fallbackName = existing.type === 'Income' ? 'Uncategorised Income' : 'Uncategorised';
     let uncategorisedCat = await prisma.category.findFirst({
-      where: { name: 'Uncategorised' }
+      where: { name: fallbackName }
     });
 
     // If it doesn't exist, create it automatically
     if (!uncategorisedCat) {
       uncategorisedCat = await prisma.category.create({
         data: {
-          name: 'Uncategorised',
-          type: 'Expense'
+          name: fallbackName,
+          type: existing.type
         }
       });
     }
@@ -361,8 +376,7 @@ async function deleteCategory(req, res, next) {
         await prisma.transaction.update({
           where: { id: tx.id },
           data: {
-            categoryId: uncategorisedCat.id,
-            category: uncategorisedCat.name
+            category: { connect: { id: uncategorisedCat.id } }
           }
         });
         reassignedCount++;

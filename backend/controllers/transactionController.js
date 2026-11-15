@@ -95,9 +95,9 @@ async function validateTransactionData(data, isUpdate = false) {
       const provided = data.category || data.categoryId || 'none';
       errors.push(`Category '${provided}' does not exist. Please choose an existing category.`);
     } else {
-      normalized.categoryId = categoryRecord.id;
-      normalized.category = categoryRecord.name;
-    }
+      normalized.category = {
+  connect: { id: categoryRecord.id }
+};
   }
 
   // 5. Validate date (format: YYYY-MM-DD)

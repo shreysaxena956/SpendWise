@@ -10,8 +10,7 @@
  */
 
 // Base API URL (falls back to local Express server port 5000 if not proxying)
-const API_BASE = '/api';
-
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 /**
  * 1. Fetch all transactions with optional query filters
  * @param {Object} filters - { type, category, categoryId, month, year, search }

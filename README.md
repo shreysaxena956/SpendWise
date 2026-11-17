@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💰 SpendWise
+# SpendWise
 
 ### Offline-First Personal Finance Desktop Application with 2D & Interactive 3D Analytics
 
@@ -13,22 +13,24 @@
 [![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tests](https://img.shields.io/badge/Tests-33%2F33%20Passed-brightgreen?style=for-the-badge)](docs/testing.md)
 
-*A full-stack offline-first desktop personal finance manager built with React 18, Node.js, Express.js, PostgreSQL, and Prisma ORM, featuring an Interactive 3D Financial Space.*
 
-[Overview](#-project-overview) • [Key Features](#-key-features) • [Architecture](#-project-architecture) • [Database](#-database-design--relationships) • [API Reference](#-backend-api-endpoints) • [Quick Start](#-step-by-step-installation) • [Team](#-team-contributions)
+
 
 </div>
 
 ---
+<div align="center">
 
-## 📋 Table of Contents
+## Table of Contents
+
+</div>
 
 - [Project Overview](#-project-overview)
 - [Problem Statement](#-problem-statement)
-- [Project Objectives](#-project-objectives)
+- [Project Objectives] ? (#-project-objectives)
 - [Key Features](#-key-features)
 - [Screenshots](#-screenshots)
-- [Technology Stack](#-technology-stack)
+- [Technology Stack] removed(#-technology-stack)
 - [Project Architecture](#-project-architecture)
 - [Complete Folder Structure](#-complete-folder-structure)
 - [Database Design & Relationships](#-database-design--relationships)
@@ -46,21 +48,23 @@
 - [License](#-license)
 
 ---
+<div align="center">
 
-## 🔎 Project Overview
+## Project Overview
 
-**SpendWise** is a full-stack, offline-first personal finance desktop web application designed for a single user on a single computer. Developed as a collaborative three-member college engineering project, SpendWise allows users to record, categorize, audit, and analyze their personal earnings and expenditures without relying on cloud services, external internet access, or subscription fees.
+</div>
 
-SpendWise combines reliable relational accounting with modern visualizations:
-- **Lifetime & Monthly Tracking**: Dynamic income, expense, and net savings metrics.
-- **Category Classification**: Clean organization into customizable income and expense buckets.
-- **Audit Ledger**: Comprehensive historical ledger with multi-parameter filtering and keyword search.
-- **Dual Visual Analytics**: Standard 2D interactive SVG charts alongside an **Interactive 3D Financial Dashboard** powered by Three.js and React Three Fiber.
-- **Dual-Mode Backend**: Seamless operation with a live **PostgreSQL** database via Prisma ORM, or zero-config development using a built-in **in-memory mock dataset**.
+
+**SpendWise** is a full-stack, offline-first personal finance desktop web application designed for a single user on a single computer. SpendWise allows users to record, categorize, audit, and analyze their personal earnings and expenditures without relying external internet access.
+
 
 ---
+<div align="center">
 
-## ❓ Problem Statement
+## Problem Statement
+
+</div>
+
 
 In today's digital economy, tracking personal income, budgeting across living expenses, and identifying unnecessary outflows is a common challenge for students and professionals. Most commercial personal finance solutions exhibit major pain points:
 1. **Privacy Concerns**: Requiring sensitive financial data to be uploaded to third-party cloud servers.
@@ -71,45 +75,38 @@ In today's digital economy, tracking personal income, budgeting across living ex
 
 ---
 
-## 🎯 Project Objectives
 
-1. **Full-Stack Engineering**: Architect a cohesive 3-tier desktop application using React 18, Node.js, Express.js, and PostgreSQL.
-2. **Robust Transaction Management**: Implement full CRUD operations for income and expenses with strict client and server validation.
-3. **Structured Taxonomy**: Enable dynamic category management with referential integrity protection (`ON DELETE RESTRICT` and orphan reassignment).
-4. **Real-Time Analytics**: Compute dynamic financial metrics (lifetime balance, monthly income/expenses, category breakdowns, 12-month trends) from raw database records without hardcoded values.
-5. **Modern Visualizations**: Combine clean 2D SVG charts with an interactive 3D financial space for immersive portfolio inspection.
-6. **Zero-Friction Onboarding**: Provide an in-memory development mode (`USE_MOCK=true`) allowing immediate evaluation without local PostgreSQL setup.
-7. **Production-Grade Engineering Hygiene**: Establish standardized REST APIs, automated test suites (33 passed verification tests), normalized 3NF database schema, and modular team contributions.
 
----
+<div align="center">
 
-## ✨ Key Features
+## Key Features
 
-### 1. Income & Expense Management (Member 1)
-- **Record Income**: Dedicated modal form to log earnings with title, amount, category, date, and notes.
-- **Record Expense**: Dedicated modal form to log expenditures with pre-filtered expense categories.
+</div>
+
+#### Income & Expense Management
+- **Record Income & Expense**: Dedicated modal form to log earnings with title, amount, category, date, notes and log expenditures with pre-filtered expense categories.
+
 - **Edit & Update**: Edit any past record with pre-filled inputs and dynamic category reloading.
 - **Safe Deletion**: Deletion confirmation modal preventing accidental data removal.
-- **Strict Validation**: Enforces positive numerical amounts, non-empty titles, valid dates, and verified category associations.
 
-### 2. Dashboard & Financial Analytics (Member 2)
-- **Lifetime Summary Cards**: Real-time display of Total Income, Total Expenses, Current Balance, and Total Transaction Count.
-- **Monthly Summary Cards**: Dedicated metrics for the selected month's Income, Expenses, and Net Savings/Deficit.
+#### Dashboard & Financial Analytics
+- **Lifetime & Monthly Summary Cards**: Real-time display of Total Income, Total Expenses, Current Balance, and Total Transaction Count.
+
 - **Category-Wise Spending Donut Chart**: Interactive SVG donut chart detailing expenditure distribution, slice percentages, and category counts.
 - **Monthly Spending Overview Bar Chart**: 12-month comparative dual-bar chart showing month-by-month Income vs. Expense trajectories.
 - **Recent Activity Ledger**: Quick-look preview of the 5 most recent transactions with direct navigation to the full audit log.
 - **Dynamic Filtering**: Global month and year dropdown selectors triggering automatic metric recomputations.
 
-### 3. Categories & Transaction History (Member 3)
+#### Categories & Transaction History 
 - **Category Management**: View, create, edit, and delete spending categories with type badges (`Income` vs. `Expense`).
 - **Referential Integrity & Orphan Protection**: Prevents deletion of the system default `'Uncategorised'` category; automatically migrates transactions from deleted custom categories to `'Uncategorised'` to prevent orphan records.
 - **Duplicate Prevention**: Case-insensitive uniqueness validation on category names.
 - **Transaction History Audit Ledger**: Complete historical table with formatted currency, dates, notes, and action buttons.
 - **Multi-Parameter Filtering**: Filter simultaneously by Type (`All`, `Income`, `Expense`), Category, Month, Year, and Title/Notes keyword search.
-- **Real-Time Filtered KPIs**: Dynamic KPI strip updating filtered records count, filtered income, filtered expenses, and filtered net balance on the fly.
 
-### 4. Interactive 3D Financial Dashboard Studio (New Feature)
-- **Three.js & React Three Fiber Canvas**: Immersive cybernetic dark-themed 3D environment.
+
+#### Interactive 3D Financial Dashboard Studio
+Three.js & React Three Fiber Canvas: Immersive cybernetic dark-themed 3D environment.
 - **Section A — Floating Glass Cards**: Floating 3D glass slabs for Total Income, Balance, and Expenses with zero-gravity floating animations.
 - **Section B — 3D Monthly Overview**: 3D dual-bar chart representing income and expense volumes across months.
 - **Section C — 3D Category Pillars**: Glowing vertical pillars with glowing caps proportional to category expenditures.
@@ -117,10 +114,13 @@ In today's digital economy, tracking personal income, budgeting across living ex
 - **Camera Presets & HUD**: OrbitControls camera with 5 preset focus modes (`overview`, `summary`, `monthly`, `categories`, `trends`) and a glassmorphism inspector drawer.
 
 ---
+<div align="center">
 
-## 📸 Screenshots
+##  Screenshots
 
-> *Genuine application screenshots captured from the running SpendWise application.*
+</div>
+
+
 
 | View | Screenshot Preview | Description |
 | :--- | :---: | :--- |
@@ -132,37 +132,19 @@ In today's digital economy, tracking personal income, budgeting across living ex
 
 ---
 
-## 🛠️ Technology Stack
-
-The project focuses on core web and software engineering technologies aligned with our college curriculum:
-
-| Technology | Role & Purpose |
-| :--- | :--- |
-| **HTML** | Semantic markup structure for web page layout and desktop browser presentation |
-| **CSS** | Custom styling, dark mode design system, responsive grids, and modal dialogs |
-| **JavaScript** | Core programming language powering both client-side React and server-side Node.js |
-| **React.js** | Declarative component-based frontend user interface library |
-| **Node.js** | Asynchronous event-driven JavaScript runtime environment for the backend server |
-| **Express.js** | Minimalist backend web framework handling REST API endpoints, routing, and middleware |
-| **PostgreSQL** | Relational database management system providing structured ACID-compliant storage |
-| **Prisma ORM** | Object-Relational Mapping toolkit for schema definition, migrations, and database queries |
-| **Three.js** | WebGL 3D graphics library powering the interactive 3D Financial Space dashboard |
-
----
-
 ## 🏗️ Project Architecture
 
 SpendWise follows a classic **Three-Tier Architecture** cleanly segregated into Presentation, Application/Business Logic, and Data Storage tiers.
 
 ```mermaid
 flowchart TD
-    subgraph Client["Presentation Tier — React 18 + Vite (Port 5173)"]
+    subgraph Client ["Client (Frontend)"]
         UI["App.jsx (Root Coordinator)"]
-        Tab1["DashboardView (Member 2)<br/>Summary Cards, SVG Charts, Recent Tx"]
-        Tab2["TransactionHistoryView (Member 3)<br/>Ledger, Search & Multi-Filters"]
-        Tab3["CategoryManager (Member 3)<br/>Category CRUD & Orphan Guard"]
+        Tab1["DashboardView <br/>Summary Cards, SVG Charts, Recent Tx"]
+        Tab2["TransactionHistoryView <br/>Ledger, Search & Multi-Filters"]
+        Tab3["CategoryManager <br/>Category CRUD & Orphan Guard"]
         Tab4["Dashboard3DView (3D Studio)<br/>Three.js, R3F, Canvas, OrbitControls"]
-        Modals["Transaction Modals (Member 1)<br/>AddIncome, AddExpense, Edit, Delete"]
+        Modals["Transaction Modals <br/>AddIncome, AddExpense, Edit, Delete"]
         Service["api.js Service Layer<br/>Fetch REST Client"]
 
         UI --> Tab1
@@ -179,11 +161,11 @@ flowchart TD
 
     subgraph Server["Application Tier — Express.js (Port 5000 / 5005)"]
         Entry["server.js (Express Application)"]
-        MW["Middleware (CORS, JSON Body Parser, Request Logger, Error Handler)"]
-        R1["/api/transactions (Member 1)"]
-        R2["/api/dashboard (Member 2)"]
-        R3["/api/reports (Member 2)"]
-        R4["/api/categories (Member 3)"]
+        MW["Middleware (JSON Body Parser, Request Logger, Error Handler)"]
+        R1["/api/transactions "]
+        R2["/api/dashboard "]
+        R3["/api/reports "]
+        R4["/api/categories "]
 
         Entry --> MW
         MW --> R1
@@ -211,8 +193,12 @@ flowchart TD
 ```
 
 ---
+<div align="center">
 
-## 📂 Complete Folder Structure
+## Complete Folder Structure
+
+</div>
+
 
 ```text
 SpendWise/
@@ -220,10 +206,10 @@ SpendWise/
 │   ├── config/
 │   │   └── prisma.js                    # Dual-mode data client (Prisma ORM vs. In-Memory Mock)
 │   ├── controllers/
-│   │   ├── categoryController.js        # Category CRUD & orphan reassignment (Member 3)
-│   │   ├── dashboardController.js       # Lifetime & monthly summary metrics (Member 2)
-│   │   ├── reportController.js          # Monthly & category-wise aggregations (Member 2)
-│   │   └── transactionController.js     # Transaction CRUD & query filtering (Member 1)
+│   │   ├── categoryController.js        # Category CRUD & orphan reassignment 
+│   │   ├── dashboardController.js       # Lifetime & monthly summary metrics 
+│   │   ├── reportController.js          # Monthly & category-wise aggregations 
+│   │   └── transactionController.js     # Transaction CRUD & query filtering 
 │   ├── data/
 │   │   └── temporaryMockData.js         # Realistic mock dataset for development without PostgreSQL
 │   ├── middleware/
@@ -239,14 +225,14 @@ SpendWise/
 │   ├── server.js                        # Express server entry point & middleware mounting
 │   └── test-api.js                      # Automated 33-step HTTP API integration test suite
 ├── database/                            # Database SQL scripts & module documentation
-│   ├── analytics-documentation.md       # Detailed formulas and query specifications (Member 2)
+│   ├── analytics-documentation.md       # Detailed formulas and query specifications 
 │   ├── analytics-queries.sql            # Aggregate, grouping, and window function SQL queries
-│   ├── category-documentation.md        # Category schema design & 3NF analysis (Member 3)
+│   ├── category-documentation.md        # Category schema design & 3NF analysis 
 │   ├── category-queries.sql             # Category CRUD & integrity SQL queries
-│   ├── crud_queries.sql                 # Transaction CRUD SQL query examples (Member 1)
+│   ├── crud_queries.sql                 # Transaction CRUD SQL query examples 
 │   ├── sample_data.sql                  # PostgreSQL seed data (14 categories, 17 transactions)
 │   ├── schema.sql                       # PostgreSQL DDL script (tables, constraints, indexes)
-│   ├── transactions-documentation.md    # Transaction module architecture guide (Member 1)
+│   ├── transactions-documentation.md    # Transaction module architecture guide 
 │   └── README.md                        # Database dictionary, ER diagrams, and normalization
 ├── docs/                                # Detailed Project Documentation
 │   ├── api-documentation.md             # Complete REST API specification with sample payloads
@@ -270,17 +256,17 @@ SpendWise/
 │   │   │   │   ├── Scene3D.jsx            # Environment, lighting, sparkles, camera presets
 │   │   │   │   ├── SpendingTrends3D.jsx   # 3D trajectory curve and monthly markers
 │   │   │   │   └── dashboard3d.css        # Futuristic cybernetic dark theme styling
-│   │   │   ├── AddExpenseModal.jsx        # Expense modal form with category filtering (Member 1)
-│   │   │   ├── AddIncomeModal.jsx         # Income modal form with category filtering (Member 1)
-│   │   │   ├── CategoryManager.jsx        # Category CRUD interface & statistics (Member 3)
-│   │   │   ├── CategorySpendingChart.jsx  # Interactive SVG Donut chart & legend (Member 2)
-│   │   │   ├── DashboardSummaryCards.jsx  # 6 summary KPI cards (Lifetime & Monthly) (Member 2)
-│   │   │   ├── DashboardView.jsx          # Main 2D Dashboard & Analytics view (Member 2)
-│   │   │   ├── MonthlyOverviewChart.jsx   # Interactive SVG 12-Month bar chart (Member 2)
-│   │   │   ├── NotificationToast.jsx      # Transient notification banner component (Member 1)
-│   │   │   ├── TransactionDeleteModal.jsx # Explicit delete confirmation modal (Member 1)
-│   │   │   ├── TransactionEditModal.jsx   # Transaction update form modal (Member 1)
-│   │   │   └── TransactionHistoryView.jsx # Comprehensive ledger with multi-filters (Member 3)
+│   │   │   ├── AddExpenseModal.jsx        # Expense modal form with category filtering 
+│   │   │   ├── AddIncomeModal.jsx         # Income modal form with category filtering 
+│   │   │   ├── CategoryManager.jsx        # Category CRUD interface & statistics 
+│   │   │   ├── CategorySpendingChart.jsx  # Interactive SVG Donut chart & legend 
+│   │   │   ├── DashboardSummaryCards.jsx  # 6 summary KPI cards (Lifetime & Monthly) 
+│   │   │   ├── DashboardView.jsx          # Main 2D Dashboard & Analytics view 
+│   │   │   ├── MonthlyOverviewChart.jsx   # Interactive SVG 12-Month bar chart 
+│   │   │   ├── NotificationToast.jsx      # Transient notification banner component 
+│   │   │   ├── TransactionDeleteModal.jsx # Explicit delete confirmation modal 
+│   │   │   ├── TransactionEditModal.jsx   # Transaction update form modal 
+│   │   │   └── TransactionHistoryView.jsx # Comprehensive ledger with multi-filters 
 │   │   ├── services/
 │   │   │   └── api.js                   # Unified fetch HTTP service for all REST endpoints
 │   │   ├── App.jsx                      # Root application state & 4-view navigation coordinator
@@ -296,8 +282,12 @@ SpendWise/
 ```
 
 ---
+<div align="center">
 
-## 🗄️ Database Design & Relationships
+## Database Design & Relationships
+
+</div>
+
 
 SpendWise implements a relational database schema designed in **Third Normal Form (3NF)** to ensure atomic values, no partial dependencies, and zero transitive dependencies.
 
@@ -324,25 +314,6 @@ erDiagram
     CATEGORIES ||--o{ TRANSACTIONS : "categorizes (1:N)"
 ```
 
-### Table Specifications & Constraints
-
-#### 1. `categories` Table
-- **`id`** (`SERIAL PRIMARY KEY`): Unique auto-incrementing category identifier.
-- **`name`** (`TEXT NOT NULL UNIQUE`): Category name (50 character application limit). Guarded by `chk_category_name_not_empty` (`LENGTH(TRIM(name)) > 0`).
-- **`type`** (`TEXT NOT NULL`): Strictly restricted via `CHECK (type IN ('Income', 'Expense'))`.
-- **`created_at`** (`TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP`): Record creation timestamp.
-
-#### 2. `transactions` Table
-- **`id`** (`SERIAL PRIMARY KEY`): Unique auto-incrementing transaction identifier.
-- **`title`** (`TEXT NOT NULL`): Description of transaction. Guarded by `chk_transaction_title_not_empty`.
-- **`amount`** (`DOUBLE PRECISION NOT NULL`): Financial value. Guarded by `CHECK (amount > 0)` ensuring strictly positive values.
-- **`type`** (`TEXT NOT NULL`): Restricted via `CHECK (type IN ('Income', 'Expense'))`.
-- **`date`** (`TEXT NOT NULL`): Calendar date stored as an ISO date string (`YYYY-MM-DD`).
-- **`notes`** (`TEXT`): Optional supplementary details or bank reference notes.
-- **`category_id`** (`INTEGER NOT NULL`): Foreign key referencing `categories(id)`.
-  - `ON DELETE RESTRICT`: Prohibits raw SQL deletes that leave orphaned records.
-  - `ON UPDATE CASCADE`: Automatically cascades category primary key updates.
-
 #### 3. Optimized B-Tree Indexes
 | Index Name | Table | Columns | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -352,8 +323,12 @@ erDiagram
 | `idx_transactions_date_type` | `transactions` | `date DESC, type` | Optimizes combined date-range and type queries |
 
 ---
+<div align="center">
 
-## 📡 Backend API Endpoints
+## Backend API Endpoints
+
+</div>
+
 
 All backend routes are mounted on `http://localhost:5000` (or `PORT` configured in `.env`). All API responses return standard JSON envelopes:
 - Success: `{ "success": true, "data": ... }`
@@ -381,8 +356,12 @@ All backend routes are mounted on `http://localhost:5000` (or `PORT` configured 
 > *For complete request/response JSON schemas, header details, and query parameter examples, see [docs/api-documentation.md](docs/api-documentation.md).*
 
 ---
+<div align="center">
 
-## 🧮 Dashboard Calculation Explanations
+## Dashboard Calculation Explanations
+
+</div>
+
 
 All dashboard calculations are dynamically computed from underlying database records on every request:
 
@@ -416,19 +395,23 @@ Iterates through all 12 calendar months (Jan to Dec) for the selected year and c
 
 Ensure the following runtimes and tools are installed on your machine:
 
-| Software | Minimum Version | Recommended Version | Verification Command |
-| :--- | :---: | :---: | :--- |
-| **Node.js** | `v18.0.0` | `v20.x` or `v22.x` (LTS) | `node -v` |
-| **npm** | `v9.0.0` | `v10.x` | `npm -v` |
-| **Git** | `v2.x` | Latest | `git --version` |
-| **PostgreSQL** *(Optional)* | `v14.x` | `v15.x` or `v16.x` | `psql --version` |
+| Software | Minimum Version | Recommended Version |
+| :--- | :---: | :--- |
+| **Node.js** | `v18.0.0` | `v20.x` or `v22.x` (LTS) |
+| **npm** | `v9.0.0` | `v10.x` |
+| **Git** | `v2.x` | Latest |
+| **PostgreSQL** *(Optional)* | `v14.x` | `v15.x` or `v16.x` |
 
 > [!TIP]
 > **No PostgreSQL installed?** SpendWise includes a built-in mock mode (`USE_MOCK=true`) that runs entirely in memory with realistic sample categories and transactions. You can test and evaluate the complete application immediately without installing or configuring PostgreSQL.
 
 ---
+<div align="center">
 
-## 🚀 Step-by-Step Installation
+## Step-by-Step Installation
+
+</div>
+
 
 ### 1. Clone the Repository
 ```bash
@@ -476,12 +459,13 @@ DATABASE_URL="postgresql://postgres:your_password@localhost:5432/spendwise?schem
 USE_MOCK=true
 ```
 
-> [!CAUTION]
-> Never commit `.env` files containing real database passwords to version control. `.env` is included in `.gitignore`.
-
 ---
+<div align="center">
 
-## 🗃️ Database Setup & Migrations
+## Database Setup & Migrations
+
+</div>
+
 
 ### Mode A: In-Memory Mock Mode (Default / Fastest)
 Set `USE_MOCK=true` in `backend/.env`. No database setup or SQL execution is needed. The server loads pre-configured categories and transactions automatically.
@@ -551,7 +535,7 @@ To generate an optimized client production bundle:
 cd frontend
 npm run build
 ```
-Output is compiled into `frontend/dist/` in under 2 seconds.
+Output is compiled into `frontend/dist/`.
 
 ---
 
